@@ -45,8 +45,8 @@ como documentación navegable.
 
 ## Próximos pasos
 
-- [ ] Revisar `api-contract.yaml` entre los 3 y ajustar lo que falte
+- [✔️] Revisar `api-contract.yaml` entre los 3 y ajustar lo que falte
 - [ ] Definir estrategia de tiempo real para pedidos (WebSockets vs push vs polling)
-- [ ] Armar diagrama entidad-relación de la base de datos
+- [✔️] Armar diagrama entidad-relación de la base de datos
 - [ ] Elegir hosting de backend y de bases de datos
-- [ ] Sumar a los otros dos como colaboradores del repo
+- [✔️] Sumar a los otros dos como colaboradores del repo
