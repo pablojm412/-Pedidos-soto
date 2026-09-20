@@ -1,0 +1,523 @@
+openapi: 3.0.3
+info:
+  title: API Pedidos - Nombre del Pueblo
+  description: >
+    Contrato de API para la app de pedidos estilo PedidosYa.
+    Este documento es un BORRADOR de trabajo para discutir entre los 3 programadores
+    antes de empezar a codear. Cualquier cambio en un endpoint o estructura de datos
+    debe reflejarse acá primero, y avisarse a los otros dos.
+  version: 0.1.0
+
+servers:
+  - url: https://api.pedidos-pueblo.com/v1
+    description: Producción (a definir dominio real)
+  - url: http://localhost:3000/v1
+    description: Desarrollo local
+
+tags:
+  - name: Auth
+  - name: Usuarios
+  - name: Comercios
+  - name: Productos
+  - name: Pedidos
+  - name: Repartidores
+  - name: Pagos
+
+paths:
+  # ============ AUTH ============
+  /auth/registro:
+    post:
+      tags: [Auth]
+      summary: Registro de nuevo usuario (cliente, comercio o repartidor)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, rol, nombre]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password, minLength: 8 }
+                rol: { type: string, enum: [cliente, comercio, repartidor] }
+                nombre: { type: string }
+                telefono: { type: string }
+      responses:
+        "201":
+          description: Usuario creado
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "400": { description: Datos inválidos }
+        "409": { description: Email ya registrado }
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login de usuario
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, format: password }
+      responses:
+        "200":
+          description: Login correcto
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+        "401": { description: Credenciales inválidas }
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Renovar access token usando el refresh token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refreshToken]
+              properties:
+                refreshToken: { type: string }
+      responses:
+        "200":
+          description: Nuevo access token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accessToken: { type: string }
+
+  # ============ COMERCIOS ============
+  /comercios:
+    get:
+      tags: [Comercios]
+      summary: Listar comercios (con filtro opcional por categoría / búsqueda)
+      parameters:
+        - name: categoria
+          in: query
+          schema: { type: string }
+        - name: q
+          in: query
+          schema: { type: string }
+        - name: abierto
+          in: query
+          schema: { type: boolean }
+      responses:
+        "200":
+          description: Lista de comercios
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Comercio" }
+    post:
+      tags: [Comercios]
+      summary: Crear comercio (rol admin o comercio)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComercioInput" }
+      responses:
+        "201": { description: Comercio creado }
+        "403": { description: No autorizado }
+
+  /comercios/{comercioId}:
+    get:
+      tags: [Comercios]
+      summary: Detalle de un comercio
+      parameters:
+        - name: comercioId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detalle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Comercio" }
+        "404": { description: No encontrado }
+    patch:
+      tags: [Comercios]
+      summary: Actualizar datos del comercio (horario, estado abierto/cerrado, etc)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: comercioId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ComercioInput" }
+      responses:
+        "200": { description: Actualizado }
+        "403": { description: No autorizado }
+
+  /comercios/{comercioId}/productos:
+    get:
+      tags: [Productos]
+      summary: Listar productos de un comercio
+      parameters:
+        - name: comercioId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Lista de productos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Producto" }
+    post:
+      tags: [Productos]
+      summary: Crear producto en el comercio
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: comercioId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductoInput" }
+      responses:
+        "201": { description: Producto creado }
+
+  /productos/{productoId}:
+    patch:
+      tags: [Productos]
+      summary: Actualizar producto (precio, stock, disponibilidad)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: productoId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ProductoInput" }
+      responses:
+        "200": { description: Actualizado }
+    delete:
+      tags: [Productos]
+      summary: Eliminar (o dar de baja) un producto
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: productoId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "204": { description: Eliminado }
+
+  # ============ PEDIDOS ============
+  /pedidos:
+    post:
+      tags: [Pedidos]
+      summary: Crear un nuevo pedido (cliente)
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/PedidoInput" }
+      responses:
+        "201":
+          description: Pedido creado, pendiente de confirmación de pago
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pedido" }
+        "400": { description: Carrito vacío o producto sin stock }
+    get:
+      tags: [Pedidos]
+      summary: Listar pedidos (filtrado según rol - cliente ve los suyos, comercio ve los suyos, admin ve todos)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: estado
+          in: query
+          schema: { $ref: "#/components/schemas/EstadoPedido" }
+      responses:
+        "200":
+          description: Lista de pedidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Pedido" }
+
+  /pedidos/{pedidoId}:
+    get:
+      tags: [Pedidos]
+      summary: Detalle de un pedido
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: pedidoId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        "200":
+          description: Detalle
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Pedido" }
+        "404": { description: No encontrado }
+
+  /pedidos/{pedidoId}/estado:
+    patch:
+      tags: [Pedidos]
+      summary: Cambiar estado del pedido (comercio confirma/prepara, repartidor entrega, etc)
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: pedidoId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [estado]
+              properties:
+                estado: { $ref: "#/components/schemas/EstadoPedido" }
+      responses:
+        "200": { description: Estado actualizado }
+        "409": { description: Transición de estado inválida }
+
+  /pedidos/{pedidoId}/asignar-repartidor:
+    patch:
+      tags: [Pedidos]
+      summary: Asignar un repartidor a un pedido
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: pedidoId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [repartidorId]
+              properties:
+                repartidorId: { type: string }
+      responses:
+        "200": { description: Repartidor asignado }
+
+  # ============ REPARTIDORES ============
+  /repartidores/{repartidorId}/ubicacion:
+    patch:
+      tags: [Repartidores]
+      summary: Actualizar ubicación en tiempo real del repartidor
+      security: [{ bearerAuth: [] }]
+      parameters:
+        - name: repartidorId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [lat, lng]
+              properties:
+                lat: { type: number, format: float }
+                lng: { type: number, format: float }
+      responses:
+        "200": { description: Ubicación actualizada }
+
+  # ============ PAGOS ============
+  /pagos/crear-preferencia:
+    post:
+      tags: [Pagos]
+      summary: Crear preferencia de pago en Mercado Pago para un pedido
+      security: [{ bearerAuth: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [pedidoId]
+              properties:
+                pedidoId: { type: string }
+      responses:
+        "200":
+          description: URL de checkout de Mercado Pago
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  initPoint: { type: string, format: uri }
+
+  /pagos/webhook-mercadopago:
+    post:
+      tags: [Pagos]
+      summary: Webhook que llama Mercado Pago para confirmar/rechazar un pago
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              description: Payload que envía Mercado Pago (ver su documentación oficial)
+      responses:
+        "200": { description: Recibido }
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    AuthResponse:
+      type: object
+      properties:
+        accessToken: { type: string }
+        refreshToken: { type: string }
+        usuario: { $ref: "#/components/schemas/Usuario" }
+
+    Usuario:
+      type: object
+      properties:
+        id: { type: string }
+        email: { type: string }
+        nombre: { type: string }
+        telefono: { type: string }
+        rol: { type: string, enum: [cliente, comercio, repartidor, admin] }
+
+    Comercio:
+      type: object
+      properties:
+        id: { type: string }
+        nombre: { type: string }
+        categoria: { type: string }
+        direccion: { type: string }
+        lat: { type: number }
+        lng: { type: number }
+        abierto: { type: boolean }
+        horario: { type: string }
+        logoUrl: { type: string }
+        costoEnvioBase: { type: number }
+
+    ComercioInput:
+      type: object
+      required: [nombre, categoria, direccion, lat, lng]
+      properties:
+        nombre: { type: string }
+        categoria: { type: string }
+        direccion: { type: string }
+        lat: { type: number }
+        lng: { type: number }
+        abierto: { type: boolean }
+        horario: { type: string }
+        costoEnvioBase: { type: number }
+
+    Producto:
+      type: object
+      properties:
+        id: { type: string }
+        comercioId: { type: string }
+        nombre: { type: string }
+        descripcion: { type: string }
+        precio: { type: number }
+        disponible: { type: boolean }
+        stock: { type: integer, nullable: true }
+        imagenUrl: { type: string }
+        categoria: { type: string }
+
+    ProductoInput:
+      type: object
+      required: [nombre, precio]
+      properties:
+        nombre: { type: string }
+        descripcion: { type: string }
+        precio: { type: number }
+        disponible: { type: boolean }
+        stock: { type: integer, nullable: true }
+        imagenUrl: { type: string }
+        categoria: { type: string }
+
+    EstadoPedido:
+      type: string
+      enum:
+        - pendiente_pago
+        - confirmado
+        - en_preparacion
+        - listo_para_retirar
+        - en_camino
+        - entregado
+        - cancelado
+
+    ItemPedido:
+      type: object
+      required: [productoId, cantidad]
+      properties:
+        productoId: { type: string }
+        nombreProducto: { type: string }
+        cantidad: { type: integer }
+        precioUnitario: { type: number }
+        notas: { type: string }
+
+    PedidoInput:
+      type: object
+      required: [comercioId, items, direccionEntrega]
+      properties:
+        comercioId: { type: string }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ItemPedido" }
+        direccionEntrega: { type: string }
+        latEntrega: { type: number }
+        lngEntrega: { type: number }
+        notas: { type: string }
+
+    Pedido:
+      type: object
+      properties:
+        id: { type: string }
+        clienteId: { type: string }
+        comercioId: { type: string }
+        repartidorId: { type: string, nullable: true }
+        items:
+          type: array
+          items: { $ref: "#/components/schemas/ItemPedido" }
+        subtotal: { type: number }
+        costoEnvio: { type: number }
+        total: { type: number }
+        estado: { $ref: "#/components/schemas/EstadoPedido" }
+        direccionEntrega: { type: string }
+        latEntrega: { type: number }
+        lngEntrega: { type: number }
+        creadoEn: { type: string, format: date-time }
+        actualizadoEn: { type: string, format: date-time }
