@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PedidosYa - App Clientes</title>
+
+    <!-- FontAwesome & Google Fonts -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- CSS Propio -->
+    <link rel="stylesheet" href="styles/style.css">
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-rose-500 selection:text-white pb-20 md:pb-0">
+
+    <!-- NAVBAR / HEADER -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm transition-all">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-4">
+                
+                <!-- Logo & Dirección -->
+                <div class="flex items-center gap-6">
+                    <a href="#" class="flex items-center gap-2 group" onclick="showView('home')">
+                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 group-hover:scale-105 transition-transform">
+                            <i class="fa-solid font-black text-xl">P</i>
+                        </div>
+                        <span class="font-extrabold text-2xl tracking-tight text-slate-900 hidden sm:block">pedidos<span class="text-rose-600">ya</span></span>
+                    </a>
+
+                    <!-- Selector de Dirección -->
+                    <button class="flex items-center gap-2 text-left bg-slate-100/80 hover:bg-slate-200/60 px-3 py-1.5 rounded-full transition-all text-xs sm:text-sm">
+                        <i class="fa-solid fa-location-dot text-rose-500 text-base"></i>
+                        <div class="max-w-[120px] sm:max-w-[200px] truncate">
+                            <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider leading-none">Entregar en</span>
+                            <span class="font-semibold text-slate-700 truncate block">Av. Siempreviva 742</span>
+                        </div>
+                        <i class="fa-solid fa-chevron-down text-xs text-slate-400 ml-1"></i>
+                    </button>
+                </div>
+
+                <!-- Buscador Desk -->
+                <div class="hidden md:flex flex-1 max-w-md relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Buscar platos, restaurantes, bebidas..." 
+                        class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:bg-white transition-all">
+                </div>
+
+                <!-- Carrito Button & Acciones -->
+                <div class="flex items-center gap-3">
+                    <button onclick="toggleCartDrawer(true)" class="relative p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+                        <i class="fa-solid fa-basket-shopping text-lg"></i>
+                        <span id="cartBadge" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white scale-0 transition-transform">0</span>
+                    </button>
+                    
+                    <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
+                        <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100&auto=format&fit=crop&q=80" class="w-full h-full object-cover" alt="Perfil">
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Buscador Mobile -->
+            <div class="pb-3 md:hidden">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+                    <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar en PedidosYa..." 
+                        class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- VISTA PRINCIPAL (HOME) -->
+    <main id="homeView" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8">
+        
+        <!-- Banners Promocionales (Carousel Horizontal) -->
+        <section class="flex gap-4 overflow-x-auto no-scrollbar py-2">
+            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-rose-500 to-red-600 rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-rose-500/20 shrink-0">
+                <div class="z-10 max-w-[60%]">
+                    <span class="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase">Envío Gratis</span>
+                    <h3 class="text-xl font-black mt-2 leading-tight">30% OFF en Hamburguesas</h3>
+                    <p class="text-xs text-rose-100 mt-1">Sabor real a la parrilla</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80" class="absolute -right-6 -bottom-6 w-44 h-44 object-cover rounded-full shadow-2xl rotate-12" alt="Burgers">
+            </div>
+
+            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-amber-500/20 shrink-0">
+                <div class="z-10 max-w-[60%]">
+                    <span class="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase">Noches de Pizza</span>
+                    <h3 class="text-xl font-black mt-2 leading-tight">2x1 en Pizzas Familiares</h3>
+                    <p class="text-xs text-amber-100 mt-1">Masa madre crujiente</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop&q=80" class="absolute -right-6 -bottom-6 w-44 h-44 object-cover rounded-full shadow-2xl -rotate-12" alt="Pizza">
+            </div>
+
+            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-emerald-600 to-teal-700 rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-emerald-500/20 shrink-0">
+                <div class="z-10 max-w-[60%]">
+                    <span class="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase">Saludable</span>
+                    <h3 class="text-xl font-black mt-2 leading-tight">Sushi & Bowls Frescos</h3>
+                    <p class="text-xs text-emerald-100 mt-1">Ingredientes premium</p>
+                </div>
+                <img src="https://images.unsplash.com/photo-1579871494447-9811cf80d66c?w=400&auto=format&fit=crop&q=80" class="absolute -right-6 -bottom-6 w-44 h-44 object-cover rounded-full shadow-2xl" alt="Sushi">
+            </div>
+        </section>
+
+        <!-- Filtros de Categorías -->
+        <section>
+            <h2 class="text-lg font-extrabold text-slate-900 mb-4">¿Qué se te antoja hoy?</h2>
+            <div id="categoriesContainer" class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
+                <!-- Se renderiza con JS -->
+            </div>
+        </section>
+
+        <!-- Filtros Rápidos & Listado de Restaurantes -->
+        <section class="space-y-4">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
+                <h2 class="text-xl font-extrabold text-slate-900">Restaurantes cerca tuyo</h2>
+                
+                <!-- Tag Filters -->
+                <div class="flex gap-2 overflow-x-auto no-scrollbar">
+                    <button onclick="filterQuick('all')" class="quick-filter-btn active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white transition-all shrink-0">Todos</button>
+                    <button onclick="filterQuick('top')" class="quick-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shrink-0">⭐ Más valorados</button>
+                    <button onclick="filterQuick('free_delivery')" class="quick-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shrink-0">🛵 Envío Gratis</button>
+                    <button onclick="filterQuick('fast')" class="quick-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shrink-0">⚡ Menos de 30 min</button>
+                </div>
+            </div>
+
+            <!-- Grid de Restaurantes -->
+            <div id="restaurantsGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Se renderiza con JS -->
+            </div>
+        </section>
+    </main>
+
+    <!-- VISTA RESTAURANTE / MENÚ -->
+    <main id="restaurantView" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <button onclick="showView('home')" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-rose-600 mb-4 transition-colors">
+            <i class="fa-solid fa-arrow-left"></i> Volver a restaurantes
+        </button>
+
+        <div id="restaurantHeader">
+            <!-- Renderizado dinámico -->
+        </div>
+
+        <!-- Categorías del Menú -->
+        <div class="sticky top-16 z-20 bg-slate-50/95 backdrop-blur-md py-3 my-6 border-b border-slate-200">
+            <div id="menuCategories" class="flex gap-2 overflow-x-auto no-scrollbar">
+                <!-- JS Inject -->
+            </div>
+        </div>
+
+        <!-- Platos / Productos -->
+        <div id="menuProductsGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- JS Inject -->
+        </div>
+    </main>
+
+    <!-- VISTA TRACKING (EN VIVO) -->
+    <main id="trackingView" class="hidden max-w-3xl mx-auto px-4 py-8">
+        <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
+            <div class="bg-rose-600 p-6 text-white text-center relative">
+                <div class="inline-block p-3 bg-white/10 rounded-full mb-2">
+                    <i class="fa-solid fa-motorcycle text-3xl"></i>
+                </div>
+                <h2 class="text-2xl font-black">¡Tu pedido está en camino!</h2>
+                <p class="text-rose-100 text-sm mt-1">Llegará aproximadamente en <span id="deliveryTimeLeft" class="font-bold underline">25 mins</span></p>
+            </div>
+
+            <!-- Fake Map -->
+            <div class="h-64 bg-slate-200 relative overflow-hidden flex items-center justify-center">
+                <!-- Estilo mapa con SVG -->
+                <svg class="absolute inset-0 w-full h-full opacity-30" xmlns="http://www.w3.org/2000/svg">
+                    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+                        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#94a3b8" stroke-width="1"/>
+                    </pattern>
+                    <rect width="100%" height="100%" fill="url(#grid)" />
+                </svg>
+                
+                <!-- Ruta Simulada -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                    <div class="w-3/4 h-1 border-t-4 border-dashed border-rose-500 relative">
+                        <div class="absolute -top-3 left-0 w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-store"></i></div>
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center text-sm shadow-lg animate-bounce"><i class="fa-solid fa-motorcycle"></i></div>
+                        <div class="absolute -top-3 right-0 w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-house"></i></div>
+                    </div>
+                </div>
+
+                <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 shadow">
+                    <i class="fa-solid fa-location-arrow text-rose-500 mr-1"></i> Repartidor: Carlos M. (Honda Wave)
+                </div>
+            </div>
+
+            <!-- Stepper de Estado -->
+            <div class="p-6">
+                <div class="relative flex justify-between items-center max-w-md mx-auto mb-8">
+                    <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
+                    <div id="progressLine" class="absolute top-1/2 left-0 h-1 bg-rose-600 -translate-y-1/2 z-0 transition-all duration-500" style="width: 66%;"></div>
+
+                    <!-- Steps -->
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-check"></i></div>
+                        <span class="text-[10px] font-bold text-slate-700 mt-1">Confirmado</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-fire"></i></div>
+                        <span class="text-[10px] font-bold text-slate-700 mt-1">En cocina</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold ring-4 ring-rose-100"><i class="fa-solid fa-motorcycle"></i></div>
+                        <span class="text-[10px] font-bold text-rose-600 mt-1">En camino</span>
+                    </div>
+                    <div class="relative z-10 flex flex-col items-center">
+                        <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-box-open"></i></div>
+                        <span class="text-[10px] font-bold text-slate-400 mt-1">Entregado</span>
+                    </div>
+                </div>
+
+                <!-- Resumen de Pedido -->
+                <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
+                    <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Detalles del Pedido #PY-9842</h4>
+                    <div id="trackingItemsSummary" class="text-sm space-y-1 divide-y divide-slate-200/60">
+                        <!-- JS Inject -->
+                    </div>
+                </div>
+
+                <button onclick="showView('home')" class="w-full mt-6 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all text-sm">
+                    Volver al Inicio
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- DRAWER DEL CARRITO -->
+    <div id="cartOverlay" onclick="toggleCartDrawer(false)" class="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-40 opacity-0 pointer-events-none transition-opacity duration-300"></div>
+    
+    <aside id="cartDrawer" class="fixed top-0 right-0 h-full w-full sm:w-[420px] bg-white z-50 shadow-2xl transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
+        <!-- Cart Header -->
+        <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
+            <div class="flex items-center gap-2">
+                <i class="fa-solid fa-bag-shopping text-rose-600 text-lg"></i>
+                <h3 class="font-bold text-slate-800">Tu Carrito</h3>
+            </div>
+            <button onclick="toggleCartDrawer(false)" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-500">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+        </div>
+
+        <!-- Cart Items -->
+        <div id="cartItemsContainer" class="flex-1 overflow-y-auto p-4 space-y-4">
+            <!-- JS Inject vacio o items -->
+        </div>
+
+        <!-- Cart Footer / Checkout -->
+        <div id="cartFooter" class="border-t border-slate-200 p-4 bg-white space-y-3 hidden">
+            <!-- Propina -->
+            <div>
+                <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Propina para el repartidor</label>
+                <div class="grid grid-cols-4 gap-2">
+                    <button onclick="setTip(0)" class="tip-btn text-xs font-semibold py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Sin tip</button>
+                    <button onclick="setTip(200)" class="tip-btn active text-xs font-semibold py-1.5 rounded-lg border border-rose-500 bg-rose-50 text-rose-600">$200</button>
+                    <button onclick="setTip(400)" class="tip-btn text-xs font-semibold py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">$400</button>
+                    <button onclick="setTip(600)" class="tip-btn text-xs font-semibold py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">$600</button>
+                </div>
+            </div>
+
+            <!-- Desglose de Gastos -->
+            <div class="space-y-1.5 text-xs text-slate-600 pt-2 border-t border-slate-100">
+                <div class="flex justify-between">
+                    <span>Subtotal</span>
+                    <span id="cartSubtotal" class="font-medium">$0</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Costo de envío</span>
+                    <span id="cartDelivery" class="font-medium">$350</span>
+                </div>
+                <div class="flex justify-between">
+                    <span>Propina</span>
+                    <span id="cartTip" class="font-medium">$200</span>
+                </div>
+                <div class="flex justify-between text-slate-900 font-extrabold text-base pt-2 border-t border-slate-200">
+                    <span>Total</span>
+                    <span id="cartTotal" class="text-rose-600">$0</span>
+                </div>
+            </div>
+
+            <button onclick="processCheckout()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-rose-600/30 flex items-center justify-between px-4 transition-all">
+                <span>Hacer Pedido</span>
+                <i class="fa-solid fa-arrow-right"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- MODAL DE DETALLE DE PRODUCTO -->
+    <div id="productModal" class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-white rounded-3xl max-w-md w-full overflow-hidden shadow-2xl transform scale-95 transition-transform duration-200" id="productModalContent">
+            <!-- Modal dinámico con JS -->
+        </div>
+    </div>
+
+    <!-- Script de Tailwind CSS (CDN para estilos instantáneos sin build paso a paso) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- JS Propio -->
+    <script src="js/app.js"></script>
+</body>
+</html>
