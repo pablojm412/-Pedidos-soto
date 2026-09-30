@@ -53,5 +53,5 @@ como documentación navegable.
 - [x] Estructura base del backend (NestJS + TypeORM + PostgreSQL, 5 módulos)
 - [ ] Implementar autenticación con JWT (login/registro)
 - [x] Confirmar PostgreSQL como base de datos con el equipo
-- [ ] Definir estrategia de tiempo real (polling propuesto + push notifications para avisos)
+- [✔️] Definir estrategia de tiempo real (polling propuesto + push notifications para avisos)
 - [x] Elegir hosting de backend y de base de datos
