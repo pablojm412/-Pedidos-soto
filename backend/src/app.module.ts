@@ -8,6 +8,7 @@ import { ComerciosModule } from './comercios/comercios.module';
 import { ProductosModule } from './productos/productos.module';
 import { PedidosModule } from './pedidos/pedidos.module';
 import { PagosModule } from './pagos/pagos.module';
+import { AuthModule } from './auth/auth.module';
 
 @Module({
   imports: [
@@ -33,6 +34,7 @@ import { PagosModule } from './pagos/pagos.module';
     ProductosModule,
     PedidosModule,
     PagosModule,
+    AuthModule,
   ],
   controllers: [AppController],
   providers: [AppService],
