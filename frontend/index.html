@@ -3,16 +3,35 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>PedidosYa - App Clientes</title>
+    <title>RRap i Soto - Te llevamos lo que quieras</title>
 
     <!-- FontAwesome & Google Fonts -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     
     <!-- CSS Propio -->
-    <link rel="stylesheet" href="styles/styles.css">
+    <link rel="stylesheet" href="styles/style.css">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            blue: '#0A1B5C',
+                            darkblue: '#06103A',
+                            orange: '#FF5C00',
+                            lightorange: '#FF7A28',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
-<body class="bg-slate-50 text-slate-800 antialiased selection:bg-rose-500 selection:text-white pb-20 md:pb-0">
+<body class="bg-slate-50 text-slate-800 antialiased selection:bg-brand-orange selection:text-white pb-20 md:pb-0">
 
     <!-- NAVBAR / HEADER -->
     <header class="sticky top-0 z-30 bg-white/90 backdrop-blur-md border-b border-slate-200/80 shadow-sm transition-all">
@@ -21,16 +40,20 @@
                 
                 <!-- Logo & Dirección -->
                 <div class="flex items-center gap-6">
-                    <a href="#" class="flex items-center gap-2 group" onclick="showView('home')">
-                        <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-rose-600 to-red-500 flex items-center justify-center text-white shadow-lg shadow-rose-500/30 group-hover:scale-105 transition-transform">
-                            <i class="fa-solid font-black text-xl">P</i>
+                    <a href="#" class="flex items-center gap-3 group" onclick="showView('home')">
+                        <!-- Contenedor del Logo de RRap i Soto -->
+                        <div class="h-10 px-2 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-md group-hover:scale-105 transition-transform">
+                            <img src="WhatsApp Image 2026-09-30 at 12.27.42 PM.jpeg" alt="RRap i Soto" class="h-8 object-contain">
                         </div>
-                        <span class="font-extrabold text-2xl tracking-tight text-slate-900 hidden sm:block">pedidos<span class="text-rose-600">ya</span></span>
+                        <div class="hidden sm:flex flex-col">
+                            <span class="font-extrabold text-xl tracking-tight text-brand-blue leading-none">RRap <span class="text-brand-orange italic">i</span> Soto</span>
+                            <span class="text-[9px] font-semibold text-slate-400 tracking-wider">DELIVERY APP</span>
+                        </div>
                     </a>
 
                     <!-- Selector de Dirección -->
                     <button class="flex items-center gap-2 text-left bg-slate-100/80 hover:bg-slate-200/60 px-3 py-1.5 rounded-full transition-all text-xs sm:text-sm">
-                        <i class="fa-solid fa-location-dot text-rose-500 text-base"></i>
+                        <i class="fa-solid fa-location-dot text-brand-orange text-base"></i>
                         <div class="max-w-[120px] sm:max-w-[200px] truncate">
                             <span class="block text-[10px] text-slate-400 font-semibold uppercase tracking-wider leading-none">Entregar en</span>
                             <span class="font-semibold text-slate-700 truncate block">Av. Siempreviva 742</span>
@@ -42,15 +65,15 @@
                 <!-- Buscador Desk -->
                 <div class="hidden md:flex flex-1 max-w-md relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Buscar platos, restaurantes, bebidas..." 
-                        class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:bg-white transition-all">
+                    <input type="text" id="searchInput" oninput="handleSearch(this.value)" placeholder="Te llevamos lo que quieras en la comodidad de un click..." 
+                        class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange/30 focus:bg-white transition-all">
                 </div>
 
                 <!-- Carrito Button & Acciones -->
                 <div class="flex items-center gap-3">
-                    <button onclick="toggleCartDrawer(true)" class="relative p-2.5 rounded-xl bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+                    <button onclick="toggleCartDrawer(true)" class="relative p-2.5 rounded-xl bg-orange-50 text-brand-orange hover:bg-orange-100 transition-all">
                         <i class="fa-solid fa-basket-shopping text-lg"></i>
-                        <span id="cartBadge" class="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white scale-0 transition-transform">0</span>
+                        <span id="cartBadge" class="absolute -top-1 -right-1 bg-brand-orange text-white text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center border-2 border-white scale-0 transition-transform">0</span>
                     </button>
                     
                     <div class="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
@@ -64,8 +87,8 @@
             <div class="pb-3 md:hidden">
                 <div class="relative">
                     <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
-                    <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar en PedidosYa..." 
-                        class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-rose-500">
+                    <input type="text" oninput="handleSearch(this.value)" placeholder="Buscar en RRap i Soto..." 
+                        class="w-full pl-10 pr-4 py-2 bg-slate-100 border-none rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-brand-orange">
                 </div>
             </div>
         </div>
@@ -76,20 +99,20 @@
         
         <!-- Banners Promocionales (Carousel Horizontal) -->
         <section class="flex gap-4 overflow-x-auto no-scrollbar py-2">
-            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-rose-500 to-red-600 rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-rose-500/20 shrink-0">
+            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-brand-blue to-brand-darkblue rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-brand-blue/20 shrink-0">
                 <div class="z-10 max-w-[60%]">
-                    <span class="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase">Envío Gratis</span>
+                    <span class="bg-brand-orange/90 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase text-white">Envío Gratis</span>
                     <h3 class="text-xl font-black mt-2 leading-tight">30% OFF en Hamburguesas</h3>
-                    <p class="text-xs text-rose-100 mt-1">Sabor real a la parrilla</p>
+                    <p class="text-xs text-slate-300 mt-1">Sabor real a la parrilla</p>
                 </div>
                 <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=400&auto=format&fit=crop&q=80" class="absolute -right-6 -bottom-6 w-44 h-44 object-cover rounded-full shadow-2xl rotate-12" alt="Burgers">
             </div>
 
-            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-amber-500 to-orange-600 rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-amber-500/20 shrink-0">
+            <div class="min-w-[280px] sm:min-w-[360px] h-40 bg-gradient-to-r from-brand-orange to-brand-lightorange rounded-3xl p-6 text-white flex flex-col justify-between relative overflow-hidden shadow-lg shadow-brand-orange/20 shrink-0">
                 <div class="z-10 max-w-[60%]">
                     <span class="bg-white/20 backdrop-blur-md px-2.5 py-1 rounded-full text-xs font-semibold tracking-wider uppercase">Noches de Pizza</span>
                     <h3 class="text-xl font-black mt-2 leading-tight">2x1 en Pizzas Familiares</h3>
-                    <p class="text-xs text-amber-100 mt-1">Masa madre crujiente</p>
+                    <p class="text-xs text-orange-100 mt-1">Masa madre crujiente</p>
                 </div>
                 <img src="https://images.unsplash.com/photo-1513104890138-7c749659a591?w=400&auto=format&fit=crop&q=80" class="absolute -right-6 -bottom-6 w-44 h-44 object-cover rounded-full shadow-2xl -rotate-12" alt="Pizza">
             </div>
@@ -106,7 +129,7 @@
 
         <!-- Filtros de Categorías -->
         <section>
-            <h2 class="text-lg font-extrabold text-slate-900 mb-4">¿Qué se te antoja hoy?</h2>
+            <h2 class="text-lg font-extrabold text-brand-blue mb-4">¿Qué se te antoja hoy?</h2>
             <div id="categoriesContainer" class="flex gap-4 overflow-x-auto no-scrollbar pb-2">
                 <!-- Se renderiza con JS -->
             </div>
@@ -115,11 +138,11 @@
         <!-- Filtros Rápidos & Listado de Restaurantes -->
         <section class="space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-                <h2 class="text-xl font-extrabold text-slate-900">Restaurantes cerca tuyo</h2>
+                <h2 class="text-xl font-extrabold text-brand-blue">Restaurantes cerca tuyo</h2>
                 
                 <!-- Tag Filters -->
                 <div class="flex gap-2 overflow-x-auto no-scrollbar">
-                    <button onclick="filterQuick('all')" class="quick-filter-btn active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-slate-900 text-white transition-all shrink-0">Todos</button>
+                    <button onclick="filterQuick('all')" class="quick-filter-btn active px-3.5 py-1.5 rounded-full text-xs font-semibold bg-brand-blue text-white transition-all shrink-0">Todos</button>
                     <button onclick="filterQuick('top')" class="quick-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shrink-0">⭐ Más valorados</button>
                     <button onclick="filterQuick('free_delivery')" class="quick-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shrink-0">🛵 Envío Gratis</button>
                     <button onclick="filterQuick('fast')" class="quick-filter-btn px-3.5 py-1.5 rounded-full text-xs font-semibold bg-white border border-slate-200 text-slate-600 hover:bg-slate-50 transition-all shrink-0">⚡ Menos de 30 min</button>
@@ -135,7 +158,7 @@
 
     <!-- VISTA RESTAURANTE / MENÚ -->
     <main id="restaurantView" class="hidden max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <button onclick="showView('home')" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-rose-600 mb-4 transition-colors">
+        <button onclick="showView('home')" class="inline-flex items-center gap-2 text-sm font-semibold text-slate-600 hover:text-brand-orange mb-4 transition-colors">
             <i class="fa-solid fa-arrow-left"></i> Volver a restaurantes
         </button>
 
@@ -159,12 +182,12 @@
     <!-- VISTA TRACKING (EN VIVO) -->
     <main id="trackingView" class="hidden max-w-3xl mx-auto px-4 py-8">
         <div class="bg-white rounded-3xl shadow-xl border border-slate-100 overflow-hidden">
-            <div class="bg-rose-600 p-6 text-white text-center relative">
+            <div class="bg-brand-blue p-6 text-white text-center relative">
                 <div class="inline-block p-3 bg-white/10 rounded-full mb-2">
-                    <i class="fa-solid fa-motorcycle text-3xl"></i>
+                    <i class="fa-solid fa-motorcycle text-3xl text-brand-orange"></i>
                 </div>
                 <h2 class="text-2xl font-black">¡Tu pedido está en camino!</h2>
-                <p class="text-rose-100 text-sm mt-1">Llegará aproximadamente en <span id="deliveryTimeLeft" class="font-bold underline">25 mins</span></p>
+                <p class="text-slate-200 text-sm mt-1">Llegará aproximadamente en <span id="deliveryTimeLeft" class="font-bold underline text-brand-orange">25 mins</span></p>
             </div>
 
             <!-- Fake Map -->
@@ -179,15 +202,15 @@
                 
                 <!-- Ruta Simulada -->
                 <div class="absolute inset-0 flex items-center justify-center">
-                    <div class="w-3/4 h-1 border-t-4 border-dashed border-rose-500 relative">
-                        <div class="absolute -top-3 left-0 w-6 h-6 bg-slate-800 text-white rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-store"></i></div>
-                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-rose-600 text-white rounded-full flex items-center justify-center text-sm shadow-lg animate-bounce"><i class="fa-solid fa-motorcycle"></i></div>
+                    <div class="w-3/4 h-1 border-t-4 border-dashed border-brand-orange relative">
+                        <div class="absolute -top-3 left-0 w-6 h-6 bg-brand-blue text-white rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-store"></i></div>
+                        <div class="absolute -top-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-brand-orange text-white rounded-full flex items-center justify-center text-sm shadow-lg animate-bounce"><i class="fa-solid fa-motorcycle"></i></div>
                         <div class="absolute -top-3 right-0 w-6 h-6 bg-emerald-600 text-white rounded-full flex items-center justify-center text-xs"><i class="fa-solid fa-house"></i></div>
                     </div>
                 </div>
 
                 <div class="absolute bottom-3 left-3 bg-white/90 backdrop-blur-md px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-700 shadow">
-                    <i class="fa-solid fa-location-arrow text-rose-500 mr-1"></i> Repartidor: Carlos M. (Honda Wave)
+                    <i class="fa-solid fa-location-arrow text-brand-orange mr-1"></i> Repartidor: Carlos M. (Honda Wave)
                 </div>
             </div>
 
@@ -195,20 +218,20 @@
             <div class="p-6">
                 <div class="relative flex justify-between items-center max-w-md mx-auto mb-8">
                     <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-200 -translate-y-1/2 z-0"></div>
-                    <div id="progressLine" class="absolute top-1/2 left-0 h-1 bg-rose-600 -translate-y-1/2 z-0 transition-all duration-500" style="width: 66%;"></div>
+                    <div id="progressLine" class="absolute top-1/2 left-0 h-1 bg-brand-orange -translate-y-1/2 z-0 transition-all duration-500" style="width: 66%;"></div>
 
                     <!-- Steps -->
                     <div class="relative z-10 flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-check"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-brand-orange text-white flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-check"></i></div>
                         <span class="text-[10px] font-bold text-slate-700 mt-1">Confirmado</span>
                     </div>
                     <div class="relative z-10 flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-fire"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-brand-orange text-white flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-fire"></i></div>
                         <span class="text-[10px] font-bold text-slate-700 mt-1">En cocina</span>
                     </div>
                     <div class="relative z-10 flex flex-col items-center">
-                        <div class="w-8 h-8 rounded-full bg-rose-600 text-white flex items-center justify-center text-xs font-bold ring-4 ring-rose-100"><i class="fa-solid fa-motorcycle"></i></div>
-                        <span class="text-[10px] font-bold text-rose-600 mt-1">En camino</span>
+                        <div class="w-8 h-8 rounded-full bg-brand-orange text-white flex items-center justify-center text-xs font-bold ring-4 ring-orange-100"><i class="fa-solid fa-motorcycle"></i></div>
+                        <span class="text-[10px] font-bold text-brand-orange mt-1">En camino</span>
                     </div>
                     <div class="relative z-10 flex flex-col items-center">
                         <div class="w-8 h-8 rounded-full bg-slate-200 text-slate-400 flex items-center justify-center text-xs font-bold"><i class="fa-solid fa-box-open"></i></div>
@@ -218,13 +241,13 @@
 
                 <!-- Resumen de Pedido -->
                 <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
-                    <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Detalles del Pedido #PY-9842</h4>
+                    <h4 class="text-xs font-bold uppercase text-slate-400 tracking-wider">Detalles del Pedido #RRS-9842</h4>
                     <div id="trackingItemsSummary" class="text-sm space-y-1 divide-y divide-slate-200/60">
                         <!-- JS Inject -->
                     </div>
                 </div>
 
-                <button onclick="showView('home')" class="w-full mt-6 bg-slate-900 text-white py-3 rounded-xl font-bold hover:bg-slate-800 transition-all text-sm">
+                <button onclick="showView('home')" class="w-full mt-6 bg-brand-blue text-white py-3 rounded-xl font-bold hover:bg-brand-darkblue transition-all text-sm">
                     Volver al Inicio
                 </button>
             </div>
@@ -238,8 +261,8 @@
         <!-- Cart Header -->
         <div class="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
             <div class="flex items-center gap-2">
-                <i class="fa-solid fa-bag-shopping text-rose-600 text-lg"></i>
-                <h3 class="font-bold text-slate-800">Tu Carrito</h3>
+                <i class="fa-solid fa-bag-shopping text-brand-orange text-lg"></i>
+                <h3 class="font-bold text-brand-blue">Tu Carrito</h3>
             </div>
             <button onclick="toggleCartDrawer(false)" class="w-8 h-8 rounded-full hover:bg-slate-200 flex items-center justify-center text-slate-500">
                 <i class="fa-solid fa-xmark"></i>
@@ -258,7 +281,7 @@
                 <label class="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1.5">Propina para el repartidor</label>
                 <div class="grid grid-cols-4 gap-2">
                     <button onclick="setTip(0)" class="tip-btn text-xs font-semibold py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">Sin tip</button>
-                    <button onclick="setTip(200)" class="tip-btn active text-xs font-semibold py-1.5 rounded-lg border border-rose-500 bg-rose-50 text-rose-600">$200</button>
+                    <button onclick="setTip(200)" class="tip-btn active text-xs font-semibold py-1.5 rounded-lg border border-brand-orange bg-orange-50 text-brand-orange">$200</button>
                     <button onclick="setTip(400)" class="tip-btn text-xs font-semibold py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">$400</button>
                     <button onclick="setTip(600)" class="tip-btn text-xs font-semibold py-1.5 rounded-lg border border-slate-200 hover:bg-slate-50">$600</button>
                 </div>
@@ -280,11 +303,11 @@
                 </div>
                 <div class="flex justify-between text-slate-900 font-extrabold text-base pt-2 border-t border-slate-200">
                     <span>Total</span>
-                    <span id="cartTotal" class="text-rose-600">$0</span>
+                    <span id="cartTotal" class="text-brand-orange">$0</span>
                 </div>
             </div>
 
-            <button onclick="processCheckout()" class="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-rose-600/30 flex items-center justify-between px-4 transition-all">
+            <button onclick="processCheckout()" class="w-full bg-brand-orange hover:bg-brand-lightorange text-white font-bold py-3.5 rounded-2xl shadow-lg shadow-brand-orange/30 flex items-center justify-between px-4 transition-all">
                 <span>Hacer Pedido</span>
                 <i class="fa-solid fa-arrow-right"></i>
             </button>
@@ -298,9 +321,6 @@
         </div>
     </div>
 
-    <!-- Script de Tailwind CSS (CDN para estilos instantáneos sin build paso a paso) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
     <!-- JS Propio -->
     <script src="js/app.js"></script>
 </body>
