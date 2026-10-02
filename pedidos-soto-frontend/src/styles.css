@@ -1,0 +1,18 @@
+@import 'tailwindcss';
+
+@theme {
+  --color-brand-blue: #0A1B5C;
+  --color-brand-darkblue: #06103A;
+  --color-brand-orange: #FF5C00;
+  --color-brand-lightorange: #FF7A28;
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.25s ease-out forwards; }
