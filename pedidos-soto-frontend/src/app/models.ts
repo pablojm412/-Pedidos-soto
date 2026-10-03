@@ -9,13 +9,19 @@ export interface Comercio {
   rating: number;
   deliveryTime: string;
   isFreeDelivery: boolean;
-    costoEnvio: number;
+  costoEnvio: number;
   image: string;
   products: Producto[];
 }
 
-   export interface ItemCarrito { productoId: number; name: string; price: number; qty: number; }
+export interface ItemCarrito { id: number; name: string; price: number; qty: number; }
 
 export interface Usuario { id: number; name: string; email: string; rol: string; }
 
-export interface Pedido { numero: string; items: ItemCarrito[]; total: number; }
+export interface Pedido {
+  id: number;
+  numero: string;
+  estado: string;
+  items: ItemCarrito[];
+  total: number;
+}
