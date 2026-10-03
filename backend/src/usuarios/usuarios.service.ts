@@ -11,18 +11,17 @@ export class UsuariosService {
   ) {}
 
   async create(createUsuarioDto: any) {
-    // Creamos una nueva instancia del usuario con los datos que llegan
     const nuevoUsuario = this.usuarioRepository.create(createUsuarioDto);
-    // Lo guardamos en la base de datos PostgreSQL
     return await this.usuarioRepository.save(nuevoUsuario);
   }
 
   async findAll() {
-    // Retorna todos los usuarios registrados
     return await this.usuarioRepository.find();
   }
 
-  async findOne(id: number) {
-    return await this.usuarioRepository.findOneBy({ id });
+  async findOne(id: string) {
+    return await this.usuarioRepository.findOne({
+      where: { id } as any,
+    });
   }
 }

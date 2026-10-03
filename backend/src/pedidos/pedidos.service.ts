@@ -1,48 +1,56 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pedido } from './entities/pedido.entity';
-import { ItemPedido } from './entities/item-pedido.entity';
 
 @Injectable()
 export class PedidosService {
   constructor(
     @InjectRepository(Pedido)
     private readonly pedidoRepository: Repository<Pedido>,
-    @InjectRepository(ItemPedido)
-    private readonly itemPedidoRepository: Repository<ItemPedido>,
   ) {}
 
   async create(createPedidoDto: any) {
-    const { items, ...pedidoData } = createPedidoDto;
-
-    const nuevoPedido = this.pedidoRepository.create(pedidoData);
-    const pedidoGuardado: any = await this.pedidoRepository.save(nuevoPedido);
-    const pedidoId = pedidoGuardado.id;
-
-    if (items && items.length > 0) {
-      const itemsEntidades = items.map((item: any) => 
-        this.itemPedidoRepository.create({
-          ...item,
-          pedido_id: pedidoId,
-        })
-      );
-      await this.itemPedidoRepository.save(itemsEntidades);
-    }
-
-    return this.findOne(pedidoId);
+    const nuevoPedido = this.pedidoRepository.create(createPedidoDto);
+    return await this.pedidoRepository.save(nuevoPedido);
   }
 
   async findAll() {
     return await this.pedidoRepository.find({
-      relations: { cliente: true, comercio: true, repartidor: true },
+      relations: ['cliente', 'comercio', 'repartidor'],
     } as any);
   }
 
   async findOne(id: number) {
-    return await this.pedidoRepository.findOne({
+    const pedido = await this.pedidoRepository.findOne({
       where: { id },
-      relations: { cliente: true, comercio: true, repartidor: true },
+      relations: ['cliente', 'comercio', 'repartidor'],
     } as any);
+    if (!pedido) {
+      throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
+    }
+    return pedido;
+  }
+
+  async actualizarUbicacion(repartidorId: number, dto: { latitud: number; longitud: number }) {
+    const pedido = await this.pedidoRepository.findOne({
+      where: { repartidor_id: repartidorId, estado: 'en_camino' },
+    } as any);
+
+    if (!pedido) {
+      throw new NotFoundException('No se encontró ningún pedido activo en camino para este repartidor');
+    }
+
+    pedido.latitud = dto.latitud;
+    pedido.longitud = dto.longitud;
+
+    await this.pedidoRepository.save(pedido);
+
+    return {
+      mensaje: 'Ubicación actualizada correctamente',
+      pedidoId: pedido.id,
+      latitud: pedido.latitud,
+      longitud: pedido.longitud,
+    };
   }
 }
