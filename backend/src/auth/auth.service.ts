@@ -33,7 +33,7 @@ export class AuthService {
     });
 
     const guardado = await this.usuarioRepository.save(nuevoUsuario);
-    
+
     // Desestructuramos para excluir la contraseña de la respuesta de manera limpia
     const { password_hash: _, ...usuarioSinPassword } = guardado;
 
@@ -44,7 +44,13 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    const usuario = await this.usuarioRepository.findOne({ where: { email: dto.email } });
+    // password_hash tiene select: false, así que se pide de forma explícita
+    const usuario = await this.usuarioRepository
+      .createQueryBuilder('usuario')
+      .addSelect('usuario.password_hash')
+      .where('usuario.email = :email', { email: dto.email })
+      .getOne();
+
     if (!usuario) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
