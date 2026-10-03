@@ -43,6 +43,12 @@ export class Pedido {
   @Column()
   direccion_entrega: string;
 
+  @Column({ type: 'float', nullable: true })
+  latitud: number;
+
+  @Column({ type: 'float', nullable: true })
+  longitud: number;
+
   @CreateDateColumn()
   creado_en: Date;
 }

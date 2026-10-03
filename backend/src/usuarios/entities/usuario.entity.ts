@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity('usuarios')
+@Entity()
 export class Usuario {
   @PrimaryGeneratedColumn('increment')
   id: number;
@@ -14,9 +14,19 @@ export class Usuario {
   @Column({ nullable: true })
   telefono: string;
 
-  @Column({ default: 'cliente' }) // roles: cliente, comercio, repartidor, admin
-  rol: string;
+  @Column({ default: 'cliente' })
+  rol: string; // 'cliente' | 'comercio' | 'repartidor' | 'admin'
 
   @Column()
   password_hash: string;
+
+  // --- Ubicación en vivo (solo se usa si rol === 'repartidor') ---
+  @Column({ type: 'float', nullable: true })
+  ubicacion_lat: number;
+
+  @Column({ type: 'float', nullable: true })
+  ubicacion_lng: number;
+
+  @Column({ type: 'timestamp', nullable: true })
+  ubicacion_actualizada_en: Date;
 }
