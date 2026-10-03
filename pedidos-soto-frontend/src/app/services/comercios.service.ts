@@ -69,7 +69,7 @@ export class ComerciosService {
       rating: 4.5,                 // TODO: no existe en la base
       deliveryTime: '25-35 min',   // TODO: no existe en la base
       isFreeDelivery: Number(c.costo_envio_base) === 0,
-            costoEnvio: Number(c.costo_envio_base),
+      costoEnvio: Number(c.costo_envio_base),
       image: IMAGENES[c.categoria] ?? IMAGEN_DEFECTO,  // TODO: no existe en la base
       products: prods
         .filter(p => p.disponible)

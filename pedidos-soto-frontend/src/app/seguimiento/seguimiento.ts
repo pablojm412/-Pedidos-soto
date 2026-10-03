@@ -1,4 +1,5 @@
-import { Component, inject } from '@angular/core';
+import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { CarritoService } from '../services/carrito.service';
 
@@ -11,8 +12,8 @@ import { CarritoService } from '../services/carrito.service';
         <div class="overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-xl">
           <div class="bg-brand-blue p-6 text-center text-white">
             <div class="mb-2 inline-block rounded-full bg-white/10 p-3"><i class="fa-solid fa-motorcycle text-3xl text-brand-orange"></i></div>
-            <h2 class="text-2xl font-black">¡Tu pedido está en camino!</h2>
-            <p class="mt-1 text-sm text-slate-200">Llegará aproximadamente en <span class="font-bold text-brand-orange underline">25 mins</span></p>
+            <h2 class="text-2xl font-black">{{ titulo() }}</h2>
+            <p class="mt-1 text-sm text-slate-200">Pedido <span class="font-bold text-brand-orange">#{{ p.numero }}</span></p>
           </div>
 
           <div class="relative flex h-64 items-center justify-center overflow-hidden bg-slate-200">
@@ -27,23 +28,20 @@ import { CarritoService } from '../services/carrito.service';
                 <div class="absolute -top-3 right-0 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-600 text-xs text-white"><i class="fa-solid fa-house"></i></div>
               </div>
             </div>
-            <div class="absolute bottom-3 left-3 rounded-lg bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-700 shadow backdrop-blur-md">
-              <i class="fa-solid fa-location-arrow mr-1 text-brand-orange"></i> Repartidor: Carlos M. (Honda Wave)
-            </div>
           </div>
 
           <div class="p-6">
             <div class="relative mx-auto mb-8 flex max-w-md items-center justify-between">
               <div class="absolute left-0 right-0 top-1/2 z-0 h-1 -translate-y-1/2 bg-slate-200"></div>
-              <div class="absolute left-0 top-1/2 z-0 h-1 -translate-y-1/2 bg-brand-orange transition-all duration-500" style="width: 66%"></div>
+              <div class="absolute left-0 top-1/2 z-0 h-1 -translate-y-1/2 bg-brand-orange transition-all duration-500" [style.width.%]="actual() * 33.3"></div>
               @for (e of etapas; track e.label; let i = $index) {
                 <div class="relative z-10 flex flex-col items-center">
                   <div class="flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold"
-                    [class]="i <= actual ? 'bg-brand-orange text-white' : 'bg-slate-200 text-slate-400'"
-                    [class.ring-4]="i === actual" [class.ring-orange-100]="i === actual">
+                    [class]="i <= actual() ? 'bg-brand-orange text-white' : 'bg-slate-200 text-slate-400'"
+                    [class.ring-4]="i === actual()" [class.ring-orange-100]="i === actual()">
                     <i class="fa-solid" [class]="e.icon"></i>
                   </div>
-                  <span class="mt-1 text-[10px] font-bold" [class]="i === actual ? 'text-brand-orange' : i < actual ? 'text-slate-700' : 'text-slate-400'">{{ e.label }}</span>
+                  <span class="mt-1 text-[10px] font-bold" [class]="i === actual() ? 'text-brand-orange' : i < actual() ? 'text-slate-700' : 'text-slate-400'">{{ e.label }}</span>
                 </div>
               }
             </div>
@@ -51,7 +49,7 @@ import { CarritoService } from '../services/carrito.service';
             <div class="space-y-2 rounded-2xl border border-slate-100 bg-slate-50 p-4">
               <h4 class="text-xs font-bold uppercase tracking-wider text-slate-400">Detalles del Pedido #{{ p.numero }}</h4>
               <div class="space-y-1 divide-y divide-slate-200/60 text-sm">
-                @for (it of p.items; track it.name) {
+                @for (it of p.items; track it.id) {
                   <div class="flex justify-between pt-1"><span>{{ it.qty }}x {{ it.name }}</span><span class="font-semibold">{{ '$' + it.price * it.qty }}</span></div>
                 }
                 <div class="flex justify-between pt-1 font-extrabold"><span>Total</span><span class="text-brand-orange">{{ '$' + p.total }}</span></div>
@@ -70,13 +68,49 @@ import { CarritoService } from '../services/carrito.service';
     </main>
   `,
 })
-export class Seguimiento {
+export class Seguimiento implements OnInit, OnDestroy {
   protected carrito = inject(CarritoService);
-  protected actual = 2; // SIMULADO: luego viene del estado real del pedido (polling)
+  private http = inject(HttpClient);
+  private timer?: ReturnType<typeof setInterval>;
+
+  private readonly orden = ['pendiente', 'aceptado', 'en_camino', 'entregado'];
+  protected estado = signal('pendiente');
+  protected actual = computed(() => Math.max(0, this.orden.indexOf(this.estado())));
+
+  protected titulo = computed(() => {
+    switch (this.estado()) {
+      case 'aceptado': return '¡Tu pedido se está preparando!';
+      case 'en_camino': return '¡Tu pedido está en camino!';
+      case 'entregado': return '¡Pedido entregado!';
+      case 'cancelado': return 'Pedido cancelado';
+      default: return 'Pedido recibido, esperando confirmación';
+    }
+  });
+
   protected etapas = [
     { label: 'Confirmado', icon: 'fa-check' },
     { label: 'En cocina', icon: 'fa-fire' },
     { label: 'En camino', icon: 'fa-motorcycle' },
     { label: 'Entregado', icon: 'fa-box-open' },
   ];
+
+  ngOnInit() {
+    const p = this.carrito.ultimoPedido();
+    if (!p) return;
+    this.estado.set(p.estado);
+    this.timer = setInterval(() => this.consultar(p.id), 8000);
+  }
+
+  ngOnDestroy() { clearInterval(this.timer); }
+
+    private consultar(id: number) {
+    this.http.get<any>(`http://localhost:3000/pedidos/${id}`).subscribe({
+      next: r => {
+        if (!r?.estado) return;
+        this.estado.set(r.estado);
+        if (r.estado === 'entregado' || r.estado === 'cancelado') clearInterval(this.timer);
+      },
+      error: () => {},
+    });
+  }
 }

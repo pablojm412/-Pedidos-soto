@@ -31,7 +31,7 @@ import { CarritoService } from '../services/carrito.service';
                 <p class="mt-1 text-xs text-slate-400">{{ p.desc }}</p>
                 <p class="mt-2 text-sm font-extrabold text-brand-orange">{{ '$' + p.price }}</p>
               </div>
-                 <button (click)="carrito.agregar(p, c)"
+                 <button (click)="carrito.agregar(c.id, c.costoEnvio, p.id, p.name, p.price)"
                 class="rounded-xl bg-orange-50 px-3.5 py-2 text-xs font-bold text-brand-orange transition-colors hover:bg-brand-orange hover:text-white">
                 + Agregar
               </button>
