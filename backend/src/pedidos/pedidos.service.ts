@@ -17,14 +17,14 @@ export class PedidosService {
 
   async findAll() {
     return await this.pedidoRepository.find({
-      relations: ['cliente', 'comercio', 'repartidor'],
+      relations: { cliente: true, comercio: true, repartidor: true },
     } as any);
   }
 
   async findOne(id: number) {
     const pedido = await this.pedidoRepository.findOne({
       where: { id },
-      relations: ['cliente', 'comercio', 'repartidor'],
+      relations: { cliente: true, comercio: true, repartidor: true },
     } as any);
     if (!pedido) {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
