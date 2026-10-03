@@ -60,6 +60,11 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
                     <a routerLink="/seguimiento" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                       <i class="fa-solid fa-receipt mr-2 text-brand-orange"></i>Mis Pedidos
                     </a>
+                    @if (u.rol === 'comercio') {
+                      <a routerLink="/comercio" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                        <i class="fa-solid fa-store mr-2 text-brand-orange"></i>Panel del comercio
+                      </a>
+                    }
                     <button (click)="auth.logout()" class="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50">
                       <i class="fa-solid fa-right-from-bracket mr-2"></i>Cerrar Sesión
                     </button>
