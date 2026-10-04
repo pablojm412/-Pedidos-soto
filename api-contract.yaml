@@ -6,6 +6,10 @@ info:
     Este documento es un BORRADOR de trabajo para discutir entre los 3 programadores
     antes de empezar a codear. Cualquier cambio en un endpoint o estructura de datos
     debe reflejarse acá primero, y avisarse a los otros dos.
+
+    Autenticación: /pedidos y /repartidores exigen el header
+    "Authorization: Bearer <access_token>" (el token se obtiene en /auth/login).
+    Sin token responden 401; con un rol sin permiso responden 403.
   version: 0.1.0
 
 servers:
@@ -28,29 +32,34 @@ paths:
   /auth/registro:
     post:
       tags: [Auth]
-      summary: Registro de nuevo usuario (cliente, comercio o repartidor)
+      summary: Registro público de un nuevo usuario (siempre con rol cliente)
+      description: >
+        El registro público siempre crea usuarios con rol "cliente". Si el body trae un campo
+        "rol", el servidor lo ignora. Los roles comercio, repartidor y admin se asignan por
+        fuera de este endpoint (por SQL o desde un futuro panel de admin).
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [email, password, rol, nombre]
+              required: [email, password, nombre]
               properties:
                 email: { type: string, format: email }
                 password: { type: string, format: password, minLength: 8 }
-                rol: { type: string, enum: [cliente, comercio, repartidor] }
                 nombre: { type: string }
                 telefono: { type: string }
       responses:
         "201":
-          description: Usuario creado
+          description: Usuario creado (la respuesta trae un mensaje y el usuario sin la contraseña)
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/AuthResponse"
-        "400": { description: Datos inválidos }
-        "409": { description: Email ya registrado }
+                type: object
+                properties:
+                  mensaje: { type: string }
+                  usuario: { $ref: "#/components/schemas/Usuario" }
+        "400": { description: Datos inválidos o correo ya registrado }
 
   /auth/login:
     post:
@@ -79,6 +88,7 @@ paths:
     post:
       tags: [Auth]
       summary: Renovar access token usando el refresh token
+      description: Previsto, todavía no implementado en el backend.
       requestBody:
         required: true
         content:
@@ -236,6 +246,16 @@ paths:
     post:
       tags: [Pedidos]
       summary: Crear un nuevo pedido (cliente)
+      description: >
+        Los importes los calcula el servidor: subtotal, costo_envio y total salen de los precios
+        de los productos en la base y del costo_envio_base del comercio. Si el body trae
+        subtotal, total, costo_envio o precio_unitario, se ignoran. El cliente sale del token
+        (no del body) y el estado inicial siempre es "pendiente".
+
+        Validaciones: el comercio existe y está abierto; los productos existen, están
+        disponibles y son de ese comercio; las cantidades son enteros entre 1 y 50 (máximo 50
+        productos distintos); la dirección tiene entre 3 y 120 caracteres. El pedido y sus
+        items se guardan en una transacción.
       security: [{ bearerAuth: [] }]
       requestBody:
         required: true
@@ -244,28 +264,32 @@ paths:
             schema: { $ref: "#/components/schemas/PedidoInput" }
       responses:
         "201":
-          description: Pedido creado, pendiente de confirmación de pago
+          description: Pedido creado en estado pendiente
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Pedido" }
-        "400": { description: Carrito vacío o producto sin stock }
-        get:
+        "400": { description: Datos inválidos, comercio cerrado, producto no disponible o que no pertenece al comercio }
+        "401": { description: Falta el token o es inválido }
+        "404": { description: El comercio no existe }
+    get:
       tags: [Pedidos]
-      summary: Listar pedidos, con filtros opcionales por comercio y por cliente
+      summary: Listar pedidos (el resultado depende del rol del usuario del token)
       description: >
         Cada pedido incluye cliente, comercio, repartidor e items (cada item trae su producto).
         Los pedidos creados antes de guardar los items en cascada pueden tener items vacío.
-        Pendiente: guard JWT. Hoy los filtros los manda el navegador y no se valida que
-        correspondan al usuario autenticado.
+
+        Qué ve cada rol: cliente, solo sus pedidos; comercio, los de su local; repartidor,
+        los pedidos en estado aceptado y en_camino; admin, todos (puede filtrar por
+        comercio_id y cliente_id). Para los demás roles los filtros no amplían lo que se ve.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: comercio_id
           in: query
-          description: Devuelve solo los pedidos de ese comercio (lo usa el panel del comercio)
+          description: Solo lo aplica el rol admin
           schema: { type: integer }
         - name: cliente_id
           in: query
-          description: Devuelve solo los pedidos de ese cliente (lo usa "Mis Pedidos")
+          description: Pedidos de ese cliente (lo usa "Mis Pedidos"). Un usuario solo puede pedir los suyos; el admin puede pedir los de cualquiera
           schema: { type: integer }
         - name: estado
           in: query
@@ -279,9 +303,14 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Pedido" }
+        "401": { description: Falta el token o es inválido }
+        "403": { description: Comercio sin local asignado o rol sin permiso }
+
+  /pedidos/{pedidoId}:
     get:
       tags: [Pedidos]
       summary: Detalle de un pedido
+      description: Lo puede ver el cliente dueño del pedido, el comercio del pedido, un repartidor o un admin.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: pedidoId
@@ -294,16 +323,21 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Pedido" }
+        "401": { description: Falta el token o es inválido }
+        "403": { description: El pedido no es del usuario }
         "404": { description: No encontrado }
 
   /pedidos/{pedidoId}/estado:
     patch:
       tags: [Pedidos]
       summary: Cambiar estado del pedido (comercio confirma/prepara, repartidor entrega, etc)
-            description: >
+      description: >
         Estados que acepta hoy el backend: pendiente, aceptado, en_camino, entregado, cancelado.
         Un estado fuera de esa lista devuelve 400 y un pedido inexistente devuelve 404.
         No valida las transiciones entre estados.
+
+        Quién puede: el comercio (solo de sus pedidos), el repartidor (solo para pasar a
+        entregado) y el admin. El cliente no puede cambiar estados.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: pedidoId
@@ -321,12 +355,16 @@ paths:
                 estado: { $ref: "#/components/schemas/EstadoPedido" }
       responses:
         "200": { description: Estado actualizado }
-        "409": { description: Transición de estado inválida }
+        "400": { description: Estado inválido }
+        "401": { description: Falta el token o es inválido }
+        "403": { description: Rol sin permiso o pedido de otro comercio }
+        "404": { description: No encontrado }
 
   /pedidos/{pedidoId}/asignar-repartidor:
     patch:
       tags: [Pedidos]
       summary: Asignar un repartidor a un pedido
+      description: Previsto, todavía no implementado en el backend.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: pedidoId
@@ -350,6 +388,7 @@ paths:
     patch:
       tags: [Repartidores]
       summary: Actualizar ubicación en tiempo real del repartidor
+      description: Solo el propio repartidor (el id de la URL debe ser el del token) o un admin.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: repartidorId
@@ -368,6 +407,8 @@ paths:
                 lng: { type: number, format: float }
       responses:
         "200": { description: Ubicación actualizada }
+        "401": { description: Falta el token o es inválido }
+        "403": { description: No es el propio repartidor }
 
   # ============ PAGOS ============
   /pagos/crear-preferencia:
@@ -486,6 +527,9 @@ components:
 
     EstadoPedido:
       type: string
+      description: >
+        Contrato original. El backend hoy usa solo: pendiente, aceptado, en_camino,
+        entregado, cancelado (ver PATCH /pedidos/{pedidoId}/estado).
       enum:
         - pendiente_pago
         - confirmado
@@ -507,16 +551,23 @@ components:
 
     PedidoInput:
       type: object
-      required: [comercioId, items, direccionEntrega]
+      description: >
+        Body real de POST /pedidos (nombres en snake_case, como los usa el backend).
+        Cualquier otro campo, en especial los importes, se ignora.
+      required: [comercio_id, items, direccion_entrega]
       properties:
-        comercioId: { type: string }
+        comercio_id: { type: integer }
+        direccion_entrega: { type: string, minLength: 3, maxLength: 120 }
         items:
           type: array
-          items: { $ref: "#/components/schemas/ItemPedido" }
-        direccionEntrega: { type: string }
-        latEntrega: { type: number }
-        lngEntrega: { type: number }
-        notas: { type: string }
+          minItems: 1
+          maxItems: 50
+          items:
+            type: object
+            required: [producto_id, cantidad]
+            properties:
+              producto_id: { type: integer }
+              cantidad: { type: integer, minimum: 1, maximum: 50 }
 
     Pedido:
       type: object
