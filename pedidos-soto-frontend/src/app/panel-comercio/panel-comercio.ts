@@ -44,6 +44,13 @@ const SIGUIENTE: Record<string, { estado: string; texto: string }> = {
                   <span class="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-orange">{{ p.estado }}</span>
                 </div>
               </div>
+              @if (p.items?.length) {
+                <ul class="mt-3 space-y-1 border-t border-slate-100 pt-3">
+                  @for (i of p.items; track i.id) {
+                    <li class="text-sm font-semibold text-slate-700">{{ i.cantidad }}x {{ i.producto?.nombre }}</li>
+                  }
+                </ul>
+              }
               <div class="mt-3 flex gap-2">
                 @if (siguiente(p.estado); as s) {
                   <button (click)="cambiar(p.id, s.estado)" class="flex-1 rounded-xl bg-brand-orange py-2 text-sm font-bold text-white hover:bg-brand-lightorange">{{ s.texto }}</button>
