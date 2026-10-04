@@ -29,8 +29,8 @@ export class Pedido {
   @JoinColumn({ name: 'repartidor_id' })
   repartidor: Usuario;
 
-  @OneToMany(() => ItemPedido, (item) => item.pedido)
-  items: ItemPedido[];
+     @OneToMany(() => ItemPedido, (item) => item.pedido, { cascade: true })
+   items: ItemPedido[];
 
   @Column({ default: 'pendiente' }) // pendiente, aceptado, en_camino, entregado, cancelado
   estado: string;
