@@ -24,9 +24,12 @@ export class PedidosService {
     return await this.pedidoRepository.save(nuevoPedido);
   }
 
-  async findAll(comercioId?: number) {
+    async findAll(comercioId?: number, clienteId?: number) {
+    const where: any = {};
+    if (comercioId) where.comercio_id = comercioId;
+    if (clienteId) where.cliente_id = clienteId;
     return await this.pedidoRepository.find({
-      where: comercioId ? { comercio_id: comercioId } : {},
+      where,
       relations: RELACIONES,
     } as any);
   }

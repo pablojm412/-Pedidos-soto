@@ -11,9 +11,13 @@ export class PedidosController {
   }
 
   @Get()
-  findAll(@Query('comercio_id') comercioId?: string) {
-    const id = comercioId ? parseInt(comercioId, 10) : undefined;
-    return this.pedidosService.findAll(id);
+  findAll(
+    @Query('comercio_id') comercioId?: string,
+    @Query('cliente_id') clienteId?: string,
+  ) {
+    const idComercio = comercioId ? parseInt(comercioId, 10) : undefined;
+    const idCliente = clienteId ? parseInt(clienteId, 10) : undefined;
+    return this.pedidosService.findAll(idComercio, idCliente);
   }
 
   @Get(':id')
