@@ -1,11 +1,20 @@
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { In, Repository } from 'typeorm';
+import { DataSource, In, Repository } from 'typeorm';
 import { Pedido } from './entities/pedido.entity';
+import { ItemPedido } from './entities/item-pedido.entity';
 import { Comercio } from '../comercios/entities/comercio.entity';
+import { Producto } from '../productos/entities/producto.entity';
 import { UsuarioToken } from '../auth/jwt-auth.guard';
+import { CreatePedidoDto } from './dto/create-pedido.dto';
 
 const ESTADOS_VALIDOS = ['pendiente', 'aceptado', 'en_camino', 'entregado', 'cancelado'];
+
+// Propinas que ofrece el carrito (Sin tip, $200, $400, $600)
+const PROPINAS_VALIDAS = [0, 200, 400, 600];
+const MAX_CANTIDAD = 50;
+
+const redondear = (n: number) => Math.round(n * 100) / 100;
 
 const RELACIONES = {
   cliente: true,
@@ -21,14 +30,107 @@ export class PedidosService {
     private readonly pedidoRepository: Repository<Pedido>,
     @InjectRepository(Comercio)
     private readonly comercioRepository: Repository<Comercio>,
+    private readonly dataSource: DataSource,
   ) {}
 
-  /** El cliente y el estado inicial salen del servidor, no del body. */
-  async create(createPedidoDto: any, user: UsuarioToken) {
-    const datos: any = { ...createPedidoDto, cliente_id: user.sub, estado: 'pendiente' };
-    delete datos.id;
-    const nuevoPedido = this.pedidoRepository.create(datos);
-    return await this.pedidoRepository.save(nuevoPedido);
+  /**
+   * El cliente, el estado inicial, los precios, el subtotal y el total salen del
+   * servidor. Del body solo se leen comercio_id, direccion_entrega y, de cada ítem,
+   * producto_id y cantidad. Pedido e ítems se guardan en una sola transacción.
+   */
+  async create(dto: CreatePedidoDto, user: UsuarioToken) {
+    const comercioId = Number(dto?.comercio_id);
+    const direccion = String(dto?.direccion_entrega ?? '').trim();
+    const itemsDto = Array.isArray(dto?.items) ? dto.items : [];
+
+    if (!Number.isInteger(comercioId) || comercioId <= 0) {
+      throw new BadRequestException('comercio_id inválido');
+    }
+    if (!direccion) {
+      throw new BadRequestException('Falta la dirección de entrega');
+    }
+    if (itemsDto.length === 0) {
+      throw new BadRequestException('El pedido no tiene productos');
+    }
+
+    const lineas = itemsDto.map((it) => ({
+      producto_id: Number(it?.producto_id),
+      cantidad: Number(it?.cantidad),
+    }));
+    const lineaInvalida = lineas.some(
+      (l) =>
+        !Number.isInteger(l.producto_id) ||
+        !Number.isInteger(l.cantidad) ||
+        l.cantidad < 1 ||
+        l.cantidad > MAX_CANTIDAD,
+    );
+    if (lineaInvalida) {
+      throw new BadRequestException('Productos o cantidades inválidos');
+    }
+
+    return await this.dataSource.transaction(async (manager) => {
+      const comercio = await manager.findOne(Comercio, { where: { id: comercioId } } as any);
+      if (!comercio) {
+        throw new NotFoundException('Comercio no encontrado');
+      }
+
+      const ids = Array.from(new Set(lineas.map((l) => l.producto_id)));
+      const productos = await manager.find(Producto, { where: { id: In(ids) } } as any);
+      const porId = new Map(productos.map((p) => [p.id, p]));
+
+      let subtotal = 0;
+      const items = lineas.map((l) => {
+        const p = porId.get(l.producto_id);
+        if (!p) {
+          throw new BadRequestException(`El producto ${l.producto_id} no existe`);
+        }
+        if (p.comercio_id !== comercioId) {
+          throw new BadRequestException(`El producto "${p.nombre}" no pertenece a este comercio`);
+        }
+        if (!p.disponible) {
+          throw new BadRequestException(`El producto "${p.nombre}" no está disponible`);
+        }
+        const precio = Number(p.precio);
+        subtotal += precio * l.cantidad;
+        return manager.create(ItemPedido, {
+          producto_id: p.id,
+          cantidad: l.cantidad,
+          precio_unitario: precio,
+        });
+      });
+      subtotal = redondear(subtotal);
+
+      // Envío: el del comercio si existe ese campo; si no, el que mandó el carrito (nunca negativo)
+      const envioComercio = (comercio as any).costo_envio;
+      const costoEnvio = redondear(Math.max(0, Number(envioComercio ?? dto.costo_envio ?? 0)) || 0);
+
+      // Propina: se deduce del total que mandó el carrito y solo se acepta si es una de las opciones válidas
+      const propinaEnviada = redondear(Number(dto.total) - subtotal - costoEnvio);
+      const propina = PROPINAS_VALIDAS.includes(propinaEnviada) ? propinaEnviada : 0;
+
+      const total = redondear(subtotal + costoEnvio + propina);
+
+      const pedido = manager.create(Pedido, {
+        cliente_id: user.sub,
+        comercio_id: comercioId,
+        estado: 'pendiente',
+        subtotal,
+        costo_envio: costoEnvio,
+        total,
+        direccion_entrega: direccion,
+      });
+      const guardado = await manager.save(pedido);
+
+      for (const item of items) {
+        item.pedido_id = guardado.id;
+      }
+      await manager.save(items);
+
+      return await manager.findOne(Pedido, {
+        where: { id: guardado.id },
+        relations: { items: { producto: true } },
+      } as any);
+    });
   }
 
   async findAll(user: UsuarioToken, comercioId?: number, clienteId?: number) {
