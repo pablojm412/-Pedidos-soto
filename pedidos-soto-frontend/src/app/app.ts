@@ -3,6 +3,7 @@ import { RouterLink, RouterOutlet } from '@angular/router';
 import { CarritoService } from './services/carrito.service';
 import { AuthService } from './services/auth.service';
 import { ComerciosService } from './services/comercios.service';
+import { DireccionService } from './services/direccion.service';
 import { AuthModal } from './auth-modal/auth-modal';
 import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
 @Component({
@@ -22,11 +23,11 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
                 <span class="text-[9px] font-semibold tracking-wider text-slate-400">DELIVERY APP</span>
               </div>
             </a>
-            <button class="flex items-center gap-2 rounded-full bg-slate-100/80 px-3 py-1.5 text-left text-xs transition-all hover:bg-slate-200/60 sm:text-sm">
+            <button (click)="editarDireccion()" class="flex items-center gap-2 rounded-full bg-slate-100/80 px-3 py-1.5 text-left text-xs transition-all hover:bg-slate-200/60 sm:text-sm">
               <i class="fa-solid fa-location-dot text-base text-brand-orange"></i>
               <div class="max-w-[120px] truncate sm:max-w-[200px]">
                 <span class="block text-[10px] font-semibold uppercase leading-none tracking-wider text-slate-400">Entregar en</span>
-                <span class="block truncate font-semibold text-slate-700">Av. Siempreviva 742</span>
+                <span class="block truncate font-semibold text-slate-700">{{ direccion.direccion() }}</span>
               </div>
               <i class="fa-solid fa-chevron-down ml-1 text-xs text-slate-400"></i>
             </button>
@@ -104,4 +105,11 @@ export class App {
   protected carrito = inject(CarritoService);
   protected auth = inject(AuthService);
   protected comercios = inject(ComerciosService);
+  protected direccion = inject(DireccionService);
+
+  protected editarDireccion() {
+    const nueva = prompt('¿Dónde entregamos tu pedido?', this.direccion.direccion());
+    if (nueva === null) return;
+    if (!this.direccion.cambiar(nueva)) alert('Ingresá una dirección de entre 3 y 120 caracteres.');
+  }
 }

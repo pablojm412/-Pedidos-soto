@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { ItemCarrito, Pedido } from '../models';
 import { AuthService } from './auth.service';
+import { DireccionService } from './direccion.service';
 
 const API = 'http://localhost:3000';
 
@@ -10,6 +11,7 @@ const API = 'http://localhost:3000';
 export class CarritoService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
+  private direccion = inject(DireccionService);
 
   readonly opcionesTip = [0, 200, 400, 600];
 
@@ -73,7 +75,7 @@ export class CarritoService {
       subtotal: this.subtotal(),
       costo_envio: this.costoEnvio(),
       total: totalGuardado,
-      direccion_entrega: 'Av. Siempreviva 742', // TODO: tomar de la dirección elegida
+      direccion_entrega: this.direccion.direccion(),
       items: this.items().map(i => ({
         producto_id: i.id,
         cantidad: i.qty,
