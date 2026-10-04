@@ -5,6 +5,13 @@ import { Pedido } from './entities/pedido.entity';
 
 const ESTADOS_VALIDOS = ['pendiente', 'aceptado', 'en_camino', 'entregado', 'cancelado'];
 
+const RELACIONES = {
+  cliente: true,
+  comercio: true,
+  repartidor: true,
+  items: { producto: true },
+};
+
 @Injectable()
 export class PedidosService {
   constructor(
@@ -20,14 +27,14 @@ export class PedidosService {
   async findAll(comercioId?: number) {
     return await this.pedidoRepository.find({
       where: comercioId ? { comercio_id: comercioId } : {},
-      relations: { cliente: true, comercio: true, repartidor: true },
+      relations: RELACIONES,
     } as any);
   }
 
   async findOne(id: number) {
     const pedido = await this.pedidoRepository.findOne({
       where: { id },
-      relations: { cliente: true, comercio: true, repartidor: true },
+      relations: RELACIONES,
     } as any);
     if (!pedido) {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
