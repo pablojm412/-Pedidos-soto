@@ -1,0 +1,1 @@
+export const JWT_SECRET = process.env.JWT_SECRET ?? 'clave_secreta_super_segura_soto';

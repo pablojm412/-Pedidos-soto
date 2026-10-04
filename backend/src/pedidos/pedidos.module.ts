@@ -1,13 +1,16 @@
 import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm'; // <--- 1. Importar TypeOrmModule
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { PedidosService } from './pedidos.service';
 import { PedidosController } from './pedidos.controller';
-import { Pedido } from './entities/pedido.entity'; // <--- Asegúrate de que las rutas a tus entidades sean correctas
-import { ItemPedido } from './entities/item-pedido.entity'; // (Ajusta según los nombres de tus archivos en la carpeta entities)
+import { Pedido } from './entities/pedido.entity';
+import { ItemPedido } from './entities/item-pedido.entity';
+import { Comercio } from '../comercios/entities/comercio.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Pedido, ItemPedido]), // <--- 2. Registrar las entidades aquí
+    TypeOrmModule.forFeature([Pedido, ItemPedido, Comercio]),
+    AuthModule,
   ],
   controllers: [PedidosController],
   providers: [PedidosService],
