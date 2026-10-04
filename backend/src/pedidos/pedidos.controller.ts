@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Patch, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Patch, Query, ParseIntPipe } from '@nestjs/common';
 import { PedidosService } from './pedidos.service';
 
 @Controller('pedidos')
@@ -11,13 +11,22 @@ export class PedidosController {
   }
 
   @Get()
-  findAll() {
-    return this.pedidosService.findAll();
+  findAll(@Query('comercio_id') comercioId?: string) {
+    const id = comercioId ? parseInt(comercioId, 10) : undefined;
+    return this.pedidosService.findAll(id);
   }
 
   @Get(':id')
   findOne(@Param('id', ParseIntPipe) id: number) {
     return this.pedidosService.findOne(id);
+  }
+
+  @Patch(':id/estado')
+  updateEstado(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() body: { estado: string },
+  ) {
+    return this.pedidosService.updateEstado(id, body.estado);
   }
 
   @Patch('repartidor/:repartidorId/ubicacion')

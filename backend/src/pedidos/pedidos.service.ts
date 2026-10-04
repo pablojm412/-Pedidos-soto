@@ -1,7 +1,9 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Pedido } from './entities/pedido.entity';
+
+const ESTADOS_VALIDOS = ['pendiente', 'aceptado', 'en_camino', 'entregado', 'cancelado'];
 
 @Injectable()
 export class PedidosService {
@@ -15,8 +17,9 @@ export class PedidosService {
     return await this.pedidoRepository.save(nuevoPedido);
   }
 
-  async findAll() {
+  async findAll(comercioId?: number) {
     return await this.pedidoRepository.find({
+      where: comercioId ? { comercio_id: comercioId } : {},
       relations: { cliente: true, comercio: true, repartidor: true },
     } as any);
   }
@@ -30,6 +33,22 @@ export class PedidosService {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
     }
     return pedido;
+  }
+
+  async updateEstado(id: number, estado: string) {
+    if (!ESTADOS_VALIDOS.includes(estado)) {
+      throw new BadRequestException(
+        `Estado inválido. Valores permitidos: ${ESTADOS_VALIDOS.join(', ')}`,
+      );
+    }
+
+    const pedido = await this.pedidoRepository.findOne({ where: { id } } as any);
+    if (!pedido) {
+      throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
+    }
+
+    pedido.estado = estado as any;
+    return await this.pedidoRepository.save(pedido);
   }
 
   async actualizarUbicacion(repartidorId: number, dto: { latitud: number; longitud: number }) {
