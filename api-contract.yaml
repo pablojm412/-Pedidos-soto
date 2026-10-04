@@ -268,7 +268,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Pedido" }
-        "400": { description: Datos inválidos, comercio cerrado, producto no disponible o que no pertenece al comercio }
+                "400": { description: "Datos inválidos, comercio cerrado, producto no disponible o que no pertenece al comercio" }
         "401": { description: Falta el token o es inválido }
         "404": { description: El comercio no existe }
     get:
