@@ -65,6 +65,11 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
                         <i class="fa-solid fa-store mr-2 text-brand-orange"></i>Panel del comercio
                       </a>
                     }
+                    @if (u.rol === 'repartidor') {
+                      <a routerLink="/repartidor" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                        <i class="fa-solid fa-motorcycle mr-2 text-brand-orange"></i>Panel de repartidor
+                      </a>
+                    }
                     <button (click)="auth.logout()" class="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50">
                       <i class="fa-solid fa-right-from-bracket mr-2"></i>Cerrar Sesión
                     </button>
@@ -90,7 +95,7 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
       </div>
     </header>
 
-        <router-outlet />
+    <router-outlet />
     <app-carrito-drawer />
     <app-auth-modal />
   `,
