@@ -249,13 +249,27 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/Pedido" }
         "400": { description: Carrito vacío o producto sin stock }
-    get:
+        get:
       tags: [Pedidos]
-      summary: Listar pedidos (filtrado según rol - cliente ve los suyos, comercio ve los suyos, admin ve todos)
+      summary: Listar pedidos, con filtros opcionales por comercio y por cliente
+      description: >
+        Cada pedido incluye cliente, comercio, repartidor e items (cada item trae su producto).
+        Los pedidos creados antes de guardar los items en cascada pueden tener items vacío.
+        Pendiente: guard JWT. Hoy los filtros los manda el navegador y no se valida que
+        correspondan al usuario autenticado.
       security: [{ bearerAuth: [] }]
       parameters:
+        - name: comercio_id
+          in: query
+          description: Devuelve solo los pedidos de ese comercio (lo usa el panel del comercio)
+          schema: { type: integer }
+        - name: cliente_id
+          in: query
+          description: Devuelve solo los pedidos de ese cliente (lo usa "Mis Pedidos")
+          schema: { type: integer }
         - name: estado
           in: query
+          description: Previsto pero todavía no implementado en el backend
           schema: { $ref: "#/components/schemas/EstadoPedido" }
       responses:
         "200":
@@ -265,8 +279,6 @@ paths:
               schema:
                 type: array
                 items: { $ref: "#/components/schemas/Pedido" }
-
-  /pedidos/{pedidoId}:
     get:
       tags: [Pedidos]
       summary: Detalle de un pedido
@@ -288,6 +300,10 @@ paths:
     patch:
       tags: [Pedidos]
       summary: Cambiar estado del pedido (comercio confirma/prepara, repartidor entrega, etc)
+            description: >
+        Estados que acepta hoy el backend: pendiente, aceptado, en_camino, entregado, cancelado.
+        Un estado fuera de esa lista devuelve 400 y un pedido inexistente devuelve 404.
+        No valida las transiciones entre estados.
       security: [{ bearerAuth: [] }]
       parameters:
         - name: pedidoId
