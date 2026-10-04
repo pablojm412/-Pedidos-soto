@@ -28,7 +28,7 @@ export class AuthService {
       email: dto.email,
       nombre: dto.nombre,
       telefono: dto.telefono,
-      rol: dto.rol || 'cliente',
+            rol: 'cliente', // el registro público siempre crea clientes; los demás roles se asignan por SQL o admin
       password_hash,
     });
 

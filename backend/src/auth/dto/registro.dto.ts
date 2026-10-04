@@ -3,5 +3,4 @@ export class RegistroDto {
   password: string;
   nombre: string;
   telefono?: string;
-  rol?: string;
 }
