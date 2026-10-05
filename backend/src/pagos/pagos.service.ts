@@ -1,88 +1,175 @@
-import { Injectable, InternalServerErrorException } from '@nestjs/common';
+import {
+  BadRequestException, ForbiddenException, Injectable, InternalServerErrorException,
+  NotFoundException, ServiceUnavailableException,
+} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { MercadoPagoConfig, Payment, Preference } from 'mercadopago';
 import { Pago } from './entities/pago.entity';
-import { CreatePagoDto } from './dto/create-pago.dto';
-import { MercadoPagoConfig, Preference } from 'mercadopago';
+import { Pedido } from '../pedidos/entities/pedido.entity';
+import { UsuarioToken } from '../auth/jwt-auth.guard';
 
 @Injectable()
 export class PagosService {
-  private mercadoPagoClient: MercadoPagoConfig;
-
   constructor(
     @InjectRepository(Pago)
     private readonly pagoRepository: Repository<Pago>,
-  ) {
-    // Inicializa Mercado Pago con la variable de entorno que configuramos
-    this.mercadoPagoClient = new MercadoPagoConfig({
-      accessToken: process.env.MP_ACCESS_TOKEN || '',
-    });
+    @InjectRepository(Pedido)
+    private readonly pedidoRepository: Repository<Pedido>,
+    private readonly config: ConfigService,
+  ) {}
+
+  /** El cliente de Mercado Pago se crea al usarlo, así el backend arranca aunque falte el token. */
+  private clienteMP() {
+    const accessToken = this.config.get<string>('MP_ACCESS_TOKEN');
+    if (!accessToken) {
+      throw new ServiceUnavailableException('Los pagos online no están configurados');
+    }
+    return new MercadoPagoConfig({ accessToken });
   }
 
-  async crearPreferenciaYPago(dto: CreatePagoDto) {
+  async crearPreferencia(pedidoId: number, user: UsuarioToken) {
+    if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
+      throw new BadRequestException('pedido_id inválido');
+    }
+
+    const pedido = await this.pedidoRepository.findOne({
+      where: { id: pedidoId },
+      relations: { items: { producto: true } },
+    } as any);
+    if (!pedido) throw new NotFoundException('El pedido no existe');
+    if (pedido.cliente_id !== user.sub) throw new ForbiddenException('Este pedido no es tuyo');
+    if (pedido.estado !== 'pendiente') {
+      throw new BadRequestException('Solo se pueden pagar pedidos pendientes');
+    }
+    if (!pedido.items?.length) throw new BadRequestException('El pedido no tiene productos');
+
+    let pago = await this.pagoRepository.findOne({ where: { pedido_id: pedido.id } } as any);
+    if (pago?.estado === 'aprobado') throw new BadRequestException('El pedido ya está pagado');
+
+    // Los precios salen de los items guardados en el pedido, no del navegador
+    const items = pedido.items.map((i) => ({
+      id: String(i.producto_id),
+      title: i.producto?.nombre ?? `Producto ${i.producto_id}`,
+      unit_price: Number(i.precio_unitario),
+      quantity: i.cantidad,
+      currency_id: 'ARS',
+    }));
+    if (Number(pedido.costo_envio) > 0) {
+      items.push({
+        id: 'envio',
+        title: 'Envío',
+        unit_price: Number(pedido.costo_envio),
+        quantity: 1,
+        currency_id: 'ARS',
+      });
+    }
+
+    const frontend = this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
+    const volver = `${frontend}/pago-resultado`;
+    const cliente = this.clienteMP();
+
+    let mp: any;
     try {
-      // 1. Creamos la preferencia en la API de Mercado Pago
-      const preference = new Preference(this.mercadoPagoClient);
-      const mpResponse = await preference.create({
+      mp = await new Preference(cliente).create({
         body: {
-          items: [
-            {
-              id: '1',
-              title: dto.title,
-              unit_price: Number(dto.unit_price),
-              quantity: Number(dto.quantity),
-              currency_id: 'ARS',
-            },
-          ],
-          back_urls: {
-            success: 'https://tu-sitio.com/success',
-            failure: 'https://tu-sitio.com/failure',
-            pending: 'https://tu-sitio.com/pending',
-          },
-          auto_return: 'approved',
+          items,
+          external_reference: String(pedido.id),
+          back_urls: { success: volver, failure: volver, pending: volver },
         },
       });
-
-      // 2. Guardamos el registro inicial del pago en tu base de datos PostgreSQL
-      const nuevoPago = this.pagoRepository.create({
-        pedido_id: dto.pedido_id,
-        proveedor: 'mercadopago',
-        estado: 'pendientes', // Estado inicial
-        monto: dto.unit_price * dto.quantity,
-        referencia_externa: mpResponse.id, // Guardamos el ID de preferencia de MP
-      });
-
-      const pagoGuardado = await this.pagoRepository.save(nuevoPago);
-
-      // 3. Retornamos tanto el link de pago (init_point) como el registro de la DB
-      return {
-        pago: pagoGuardado,
-        init_point: mpResponse.init_point, // Link para redirigir al usuario al checkout
-        sandbox_init_point: mpResponse.sandbox_init_point, // Link de prueba
-      };
     } catch (error: any) {
       throw new InternalServerErrorException(
-        `Error al procesar el pago con Mercado Pago: ${error?.message || error}`,
+        `Error al crear el pago en Mercado Pago: ${error?.message || error}`,
       );
     }
+
+    if (pago) {
+      pago.estado = 'pendiente';
+      pago.monto = pedido.total;
+      pago.referencia_externa = mp.id;
+    } else {
+      pago = this.pagoRepository.create({
+        pedido_id: pedido.id,
+        proveedor: 'mercadopago',
+        estado: 'pendiente',
+        monto: pedido.total,
+        referencia_externa: mp.id,
+      });
+    }
+    const guardado = await this.pagoRepository.save(pago);
+
+    return {
+      pago_id: guardado.id,
+      init_point: mp.init_point,
+      sandbox_init_point: mp.sandbox_init_point,
+    };
+  }
+
+  /** Sin webhook: se consulta a Mercado Pago el estado real del pago. */
+  async verificar(paymentId: string, user: UsuarioToken) {
+    if (!/^\d+$/.test(paymentId)) throw new BadRequestException('payment_id inválido');
+
+    const cliente = this.clienteMP();
+    let payment: any;
+    try {
+      payment = await new Payment(cliente).get({ id: paymentId });
+    } catch {
+      throw new NotFoundException('No se encontró ese pago en Mercado Pago');
+    }
+
+    const pedidoId = Number(payment?.external_reference);
+    if (!Number.isInteger(pedidoId)) {
+      throw new BadRequestException('El pago no corresponde a un pedido');
+    }
+
+    const pedido = await this.pedidoRepository.findOne({ where: { id: pedidoId } } as any);
+    if (!pedido) throw new NotFoundException('El pedido no existe');
+    if (pedido.cliente_id !== user.sub && user.rol !== 'admin') {
+      throw new ForbiddenException('Este pedido no es tuyo');
+    }
+
+    const pago = await this.pagoRepository.findOne({ where: { pedido_id: pedidoId } } as any);
+    if (!pago) throw new NotFoundException('No hay un pago iniciado para este pedido');
+    if (pago.estado === 'aprobado') return pago;
+
+    let estado = 'pendiente';
+    if (payment.status === 'approved') estado = 'aprobado';
+    else if (payment.status === 'rejected' || payment.status === 'cancelled') estado = 'rechazado';
+
+    if (estado === 'aprobado') {
+      const esperado = Math.round(Number(pedido.total) * 100);
+      const pagado = Math.round(Number(payment.transaction_amount) * 100);
+      if (esperado !== pagado) {
+        throw new BadRequestException('El monto pagado no coincide con el del pedido');
+      }
+    }
+
+    pago.estado = estado;
+    pago.referencia_externa = String(payment.id);
+    return await this.pagoRepository.save(pago);
+  }
+
+  async findByPedido(pedidoId: number, user: UsuarioToken) {
+    const pedido = await this.pedidoRepository.findOne({ where: { id: pedidoId } } as any);
+    if (!pedido) throw new NotFoundException('El pedido no existe');
+    if (pedido.cliente_id !== user.sub && user.rol !== 'admin') {
+      throw new ForbiddenException('Este pedido no es tuyo');
+    }
+    return await this.pagoRepository.findOne({
+      where: { pedido_id: pedidoId },
+      relations: { pedido: true },
+    } as any);
   }
 
   async findAll() {
-    return await this.pagoRepository.find({
-      relations: { pedido: true },
-    } as any);
+    return await this.pagoRepository.find({ relations: { pedido: true } } as any);
   }
 
   async findOne(id: number) {
     return await this.pagoRepository.findOne({
       where: { id },
-      relations: { pedido: true },
-    } as any);
-  }
-
-  async findByPedido(pedidoId: number) {
-    return await this.pagoRepository.findOne({
-      where: { pedido_id: pedidoId },
       relations: { pedido: true },
     } as any);
   }
