@@ -3,9 +3,10 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { ComerciosService } from './comercios.service';
 import { ComerciosController } from './comercios.controller';
 import { Comercio } from './entities/comercio.entity';
+import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Comercio])],
+  imports: [TypeOrmModule.forFeature([Comercio]), AuthModule],
   controllers: [ComerciosController],
   providers: [ComerciosService],
 })
