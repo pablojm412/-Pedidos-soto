@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from './services/auth.service';
 
 const API = 'http://localhost:3000';
 
@@ -83,7 +83,7 @@ export class PanelRepartidor implements OnInit, OnDestroy {
   protected monto = (v: any) => Number(v);
 
   async ngOnInit() {
-    const u = this.auth.usuario();
+    const u = this.auth.usuario() as any;
     if (!u || u.rol !== 'repartidor') {
       this.mensaje.set('Esta pantalla es solo para cuentas de repartidor. Cerrá sesión e ingresá con la cuenta correspondiente.');
       return;
