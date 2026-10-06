@@ -1,10 +1,14 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, UseGuards } from '@nestjs/common';
 import { ComerciosService } from './comercios.service';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { Roles } from '../auth/roles.decorator';
 
 @Controller('comercios')
 export class ComerciosController {
   constructor(private readonly comerciosService: ComerciosService) {}
 
+  @UseGuards(JwtAuthGuard)
+  @Roles('admin')
   @Post()
   create(@Body() createComercioDto: any) {
     return this.comerciosService.create(createComercioDto);
