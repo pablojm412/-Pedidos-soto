@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 
-@Entity()
+@Entity('usuarios')
 export class Usuario {
   @PrimaryGeneratedColumn('increment')
   id: number;
@@ -17,7 +17,7 @@ export class Usuario {
   @Column({ default: 'cliente' })
   rol: string; // 'cliente' | 'comercio' | 'repartidor' | 'admin'
 
-  @Column()
+  @Column({ select: false })
   password_hash: string;
 
   // --- Ubicación en vivo (solo se usa si rol === 'repartidor') ---

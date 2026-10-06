@@ -1,6 +1,7 @@
-import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn, CreateDateColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColumn, CreateDateColumn } from 'typeorm';
 import { Usuario } from '../../usuarios/entities/usuario.entity';
 import { Comercio } from '../../comercios/entities/comercio.entity';
+import { ItemPedido } from './item-pedido.entity';
 
 @Entity('pedidos')
 export class Pedido {
@@ -27,6 +28,9 @@ export class Pedido {
   @ManyToOne(() => Usuario, { nullable: true, onDelete: 'SET NULL' })
   @JoinColumn({ name: 'repartidor_id' })
   repartidor: Usuario;
+
+     @OneToMany(() => ItemPedido, (item) => item.pedido, { cascade: true })
+   items: ItemPedido[];
 
   @Column({ default: 'pendiente' }) // pendiente, aceptado, en_camino, entregado, cancelado
   estado: string;

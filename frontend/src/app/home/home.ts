@@ -65,7 +65,7 @@ type Rapido = 'all' | 'top' | 'free_delivery' | 'fast';
                 <div class="mt-2 flex items-center gap-3 text-xs font-medium text-slate-500">
                   <span><i class="fa-regular fa-clock mr-1"></i>{{ c.deliveryTime }}</span><span>•</span>
                   <span [class.text-emerald-600]="c.isFreeDelivery" [class.font-bold]="c.isFreeDelivery">
-                    {{ c.isFreeDelivery ? 'Envío Gratis' : 'Envío $' + carrito.deliveryFee }}
+                    {{ c.isFreeDelivery ? 'Envío Gratis' : 'Envío $' + c.costoEnvio }}
                   </span>
                 </div>
               </div>

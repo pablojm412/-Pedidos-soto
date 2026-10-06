@@ -23,7 +23,7 @@ import { AuthService } from '../services/auth.service';
       </div>
 
       <div class="flex-1 space-y-4 overflow-y-auto p-4">
-        @for (item of carrito.items(); track item.productoId; let i = $index) {
+        @for (item of carrito.items(); track item.id; let i = $index) {
           <div class="flex items-center justify-between rounded-2xl border border-slate-100 bg-slate-50 p-3">
             <div>
               <h5 class="text-xs font-bold text-slate-800">{{ item.name }}</h5>
@@ -56,20 +56,18 @@ import { AuthService } from '../services/auth.service';
 
           <div class="space-y-1.5 border-t border-slate-100 pt-2 text-xs text-slate-600">
             <div class="flex justify-between"><span>Subtotal</span><span class="font-medium">{{ '$' + carrito.subtotal() }}</span></div>
-            <div class="flex justify-between"><span>Costo de envío</span><span class="font-medium">{{ '$' + carrito.deliveryFee }}</span></div>
+            <div class="flex justify-between"><span>Costo de envío</span><span class="font-medium">{{ '$' + carrito.costoEnvio() }}</span></div>
             <div class="flex justify-between"><span>Propina</span><span class="font-medium">{{ '$' + carrito.tip() }}</span></div>
             <div class="flex justify-between border-t border-slate-200 pt-2 text-base font-extrabold text-slate-900">
               <span>Total</span><span class="text-brand-orange">{{ '$' + carrito.total() }}</span>
             </div>
           </div>
 
-          @if (error()) {
-            <p class="rounded-lg bg-red-50 px-3 py-2 text-xs font-semibold text-red-600">{{ error() }}</p>
-          }
+          @if (error()) { <p class="text-center text-xs font-semibold text-rose-600">{{ error() }}</p> }
 
-          <button (click)="hacerPedido()" [disabled]="carrito.enviando()"
-            class="flex w-full items-center justify-between rounded-2xl bg-brand-orange px-4 py-3.5 font-bold text-white shadow-lg shadow-brand-orange/30 transition-all hover:bg-brand-lightorange disabled:opacity-60">
-            <span>{{ carrito.enviando() ? 'Enviando...' : 'Hacer Pedido' }}</span><i class="fa-solid fa-arrow-right"></i>
+          <button (click)="hacerPedido()"
+            class="flex w-full items-center justify-between rounded-2xl bg-brand-orange px-4 py-3.5 font-bold text-white shadow-lg shadow-brand-orange/30 transition-all hover:bg-brand-lightorange">
+            <span>Hacer Pedido</span><i class="fa-solid fa-arrow-right"></i>
           </button>
         </div>
       }
@@ -89,9 +87,9 @@ export class CarritoDrawer {
       this.auth.abrirModal('login');
       return;
     }
-    this.error.set('');
     const err = await this.carrito.confirmar();
     if (err) { this.error.set(err); return; }
+    this.error.set('');
     this.router.navigate(['/seguimiento']);
   }
 }
