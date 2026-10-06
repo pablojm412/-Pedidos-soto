@@ -84,7 +84,7 @@ export class PanelRepartidor implements OnInit, OnDestroy {
   protected monto = (v: any) => Number(v);
 
   async ngOnInit() {
-    const u = this.auth.usuario();
+    const u = this.auth.usuario() as any;
     if (!u || u.rol !== 'repartidor') {
       this.mensaje.set('Esta pantalla es solo para cuentas de repartidor. Cerrá sesión e ingresá con la cuenta correspondiente.');
       return;
