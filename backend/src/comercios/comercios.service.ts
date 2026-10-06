@@ -16,13 +16,10 @@ export class ComerciosService {
   }
 
   async findAll() {
-    return await this.comercioRepository.find({ relations: { usuario: true } } as any);
+    return await this.comercioRepository.find();
   }
 
-  async findOne(id: number) {
-    return await this.comercioRepository.findOne({
-      where: { id },
-      relations: { usuario: true },
-    } as any);
+    async findOne(id: number) {
+    return await this.comercioRepository.findOne({ where: { id } });
   }
 }

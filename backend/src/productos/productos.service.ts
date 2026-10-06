@@ -16,14 +16,11 @@ export class ProductosService {
   }
 
   async findAll() {
-    return await this.productoRepository.find({ relations: { comercio: true } } as any);
+    return await this.productoRepository.find();
   }
 
   async findOne(id: number) {
-    return await this.productoRepository.findOne({
-      where: { id },
-      relations: { comercio: true },
-    } as any);
+    return await this.productoRepository.findOne({ where: { id } });
   }
 
   async findByComercio(comercioId: number) {
