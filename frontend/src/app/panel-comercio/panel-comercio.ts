@@ -3,8 +3,9 @@ import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 const SIGUIENTE: Record<string, { estado: string; texto: string }> = {
   pendiente: { estado: 'aceptado', texto: 'Aceptar pedido' },

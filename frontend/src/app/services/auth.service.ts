@@ -2,8 +2,9 @@ import { Injectable, inject, signal } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { Usuario } from '../models';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 type Pestania = 'login' | 'register' | 'forgot';
 
 @Injectable({ providedIn: 'root' })

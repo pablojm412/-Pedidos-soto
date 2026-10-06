@@ -2,9 +2,10 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
-import { AuthService } from './services/auth.service';
+import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 @Component({
   selector: 'app-panel-repartidor',

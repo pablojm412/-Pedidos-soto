@@ -2,7 +2,9 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { CarritoService } from '../services/carrito.service';
+import { environment } from '../../environments/environment';
 
+const API = environment.apiUrl;
 @Component({
   selector: 'app-seguimiento',
   imports: [RouterLink],
@@ -103,8 +105,8 @@ export class Seguimiento implements OnInit, OnDestroy {
 
   ngOnDestroy() { clearInterval(this.timer); }
 
-    private consultar(id: number) {
-    this.http.get<any>(`http://localhost:3000/pedidos/${id}`).subscribe({
+      private consultar(id: number) {
+    this.http.get<any>(`${API}/pedidos/${id}`).subscribe({
       next: r => {
         if (!r?.estado) return;
         this.estado.set(r.estado);
@@ -113,4 +115,4 @@ export class Seguimiento implements OnInit, OnDestroy {
       error: () => {},
     });
   }
-}
+}  
