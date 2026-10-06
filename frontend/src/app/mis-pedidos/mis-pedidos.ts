@@ -4,8 +4,9 @@ import { HttpClient } from '@angular/common/http';
 import { RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 const ESTADOS: Record<string, string> = {
   pendiente: 'Pendiente',

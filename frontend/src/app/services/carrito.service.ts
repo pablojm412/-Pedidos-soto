@@ -4,8 +4,9 @@ import { firstValueFrom } from 'rxjs';
 import { ItemCarrito, Pedido } from '../models';
 import { AuthService } from './auth.service';
 import { DireccionService } from './direccion.service';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class CarritoService {

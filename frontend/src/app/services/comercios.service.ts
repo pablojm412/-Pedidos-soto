@@ -3,8 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { forkJoin, of } from 'rxjs';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { Categoria, Comercio, Producto } from '../models';
+import { environment } from '../../environments/environment';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 // Datos que todavía no existen en la base (hablar con Pablo para agregarlos)
 const IMAGENES: Record<string, string> = {
