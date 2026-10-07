@@ -2,6 +2,7 @@ import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, OneToMany, JoinColum
 import { Usuario } from '../../usuarios/entities/usuario.entity';
 import { Comercio } from '../../comercios/entities/comercio.entity';
 import { ItemPedido } from './item-pedido.entity';
+import { Pago } from '../../pagos/entities/pago.entity';
 
 @Entity('pedidos')
 export class Pedido {
@@ -29,8 +30,11 @@ export class Pedido {
   @JoinColumn({ name: 'repartidor_id' })
   repartidor: Usuario;
 
-     @OneToMany(() => ItemPedido, (item) => item.pedido, { cascade: true })
-   items: ItemPedido[];
+  @OneToMany(() => ItemPedido, (item) => item.pedido, { cascade: true })
+  items: ItemPedido[];
+
+  @OneToMany(() => Pago, (pago) => pago.pedido)
+  pagos: Pago[];
 
   @Column({ default: 'pendiente' }) // pendiente, aceptado, en_camino, entregado, cancelado
   estado: string;
