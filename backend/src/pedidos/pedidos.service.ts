@@ -16,6 +16,7 @@ const RELACIONES = {
   comercio: true,
   repartidor: true,
   items: { producto: true },
+  pagos: true,
 };
 
 @Injectable()
@@ -132,7 +133,8 @@ export class PedidosService {
       throw new ForbiddenException('No tenés permiso para ver pedidos');
     }
 
-    return await this.pedidoRepository.find({ where, relations: RELACIONES } as any);
+    const lista = await this.pedidoRepository.find({ where, relations: RELACIONES } as any);
+    return lista.map((p) => this.conEstadoPago(p));
   }
 
   async findOne(id: number, user?: UsuarioToken) {
@@ -144,7 +146,7 @@ export class PedidosService {
       throw new NotFoundException(`Pedido con ID ${id} no encontrado`);
     }
     if (user) await this.verificarAcceso(pedido, user);
-    return pedido;
+    return this.conEstadoPago(pedido);
   }
 
   async updateEstado(id: number, estado: string, user?: UsuarioToken) {
@@ -196,6 +198,13 @@ export class PedidosService {
 
   private comercioDe(user: UsuarioToken) {
     return this.comercioRepository.findOne({ where: { usuario_id: user.sub } } as any);
+  }
+
+  /** Deja solo el estado del último pago y oculta el resto de los datos del pago. */
+  private conEstadoPago(pedido: any) {
+    const { pagos, ...resto } = pedido;
+    const ultimo = pagos?.length ? [...pagos].sort((a: any, b: any) => b.id - a.id)[0] : null;
+    return { ...resto, estado_pago: ultimo?.estado ?? null };
   }
 
   private async verificarAcceso(pedido: any, user: UsuarioToken) {

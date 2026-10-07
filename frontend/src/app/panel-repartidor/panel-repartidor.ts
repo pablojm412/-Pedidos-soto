@@ -37,9 +37,14 @@ const API = environment.apiUrl;
                 </div>
                 <div class="text-right">
                   <p class="text-lg font-extrabold text-brand-orange">{{ '$' + monto(p.total) }}</p>
-                  <span class="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-orange">
-                    {{ p.estado === 'aceptado' ? 'En preparación' : 'En camino' }}
-                  </span>
+                            <span class="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-orange">
+            {{ p.estado === 'aceptado' ? 'En preparación' : 'En camino' }}
+          </span>
+          @if (p.estado_pago === 'aprobado') {
+            <span class="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600">Pagado</span>
+          } @else {
+            <span class="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-600">Sin pago online</span>
+          }
                 </div>
               </div>
               @if (p.items?.length) {
