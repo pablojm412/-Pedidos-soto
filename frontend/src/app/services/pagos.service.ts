@@ -30,6 +30,16 @@ export class PagosService {
     }
   }
 
+  /** Estado del pago de un pedido: 'aprobado', 'pendiente', 'rechazado' o null si no hay pago. */
+  async estadoDelPedido(pedidoId: number): Promise<string | null> {
+    try {
+      const r: any = await firstValueFrom(this.http.get(`${API}/pagos/pedido/${pedidoId}`));
+      return r?.estado ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   private mensaje(e: any): string {
     if (e?.status === 0) return 'No se pudo conectar con el servidor.';
     if (e?.status === 503) return 'Los pagos online no están disponibles por ahora.';
