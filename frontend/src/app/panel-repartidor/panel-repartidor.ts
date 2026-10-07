@@ -3,8 +3,12 @@ import { DatePipe } from '@angular/common';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
 import { AuthService } from '../services/auth.service';
+<<<<<<< HEAD
+=======
+import { environment } from '../../environments/environment';
+>>>>>>> 067714e1fd1ff1bb17b0d1eb90f4bf3802ad81af
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 @Component({
   selector: 'app-panel-repartidor',

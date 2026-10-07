@@ -87,9 +87,14 @@ export class CarritoDrawer {
       this.auth.abrirModal('login');
       return;
     }
-    const err = await this.carrito.confirmar();
+        const err = await this.carrito.confirmar();
     if (err) { this.error.set(err); return; }
     this.error.set('');
-    this.router.navigate(['/seguimiento']);
+    if (this.carrito.urlPago) {
+      window.location.href = this.carrito.urlPago;
+      return;
+    }
+        const id = this.carrito.ultimoPedido()?.id;
+this.router.navigate(id ? ['/seguimiento', id] : ['/seguimiento']);
   }
 }

@@ -4,14 +4,17 @@ import { firstValueFrom } from 'rxjs';
 import { ItemCarrito, Pedido } from '../models';
 import { AuthService } from './auth.service';
 import { DireccionService } from './direccion.service';
+import { environment } from '../../environments/environment';
+import { PagosService } from './pagos.service';
 
-const API = 'http://localhost:3000';
+const API = environment.apiUrl;
 
 @Injectable({ providedIn: 'root' })
 export class CarritoService {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
   private direccion = inject(DireccionService);
+  private pagos = inject(PagosService);
 
   readonly opcionesTip = [0, 200, 400, 600];
 
@@ -21,6 +24,7 @@ export class CarritoService {
   readonly tip = signal(0);
   readonly abierto = signal(false);
   readonly ultimoPedido = signal<Pedido | null>(null);
+    urlPago: string | null = null;
 
   readonly cantidad = computed(() => this.items().reduce((a, i) => a + i.qty, 0));
   readonly subtotal = computed(() => this.items().reduce((a, i) => a + i.price * i.qty, 0));
@@ -83,7 +87,7 @@ export class CarritoService {
       })),
     };
 
-    try {
+        try {
       const r: any = await firstValueFrom(this.http.post(`${API}/pedidos`, body));
       this.ultimoPedido.set({
         id: r.id,
@@ -94,6 +98,9 @@ export class CarritoService {
       });
       this.vaciar();
       this.abierto.set(false);
+            this.urlPago = null;
+      const pago = await this.pagos.crear(r.id);
+      this.urlPago = pago.url;
       return null;
     } catch (e: any) {
       if (e?.status === 0) return 'No se pudo conectar con el servidor.';
