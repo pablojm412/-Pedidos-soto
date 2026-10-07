@@ -94,6 +94,7 @@ export class CarritoDrawer {
       window.location.href = this.carrito.urlPago;
       return;
     }
-        this.router.navigate(['/seguimiento']);
+        const id = this.carrito.ultimoPedido()?.id;
+this.router.navigate(id ? ['/seguimiento', id] : ['/seguimiento']);
   }
 }

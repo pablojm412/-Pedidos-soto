@@ -33,7 +33,7 @@ const ESTADOS: Record<string, string> = {
             <div class="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm">
               <div class="flex items-start justify-between gap-4">
                 <div>
-                  <h3 class="font-extrabold text-slate-800">Pedido #RRS-{{ p.id }}</h3>
+                  <a [routerLink]="['/seguimiento', p.id]" class="font-extrabold text-slate-800 hover:text-brand-orange">Pedido #RRS-{{ p.id }}</a>
                   <p class="text-xs text-slate-500">{{ p.creado_en | date:'dd/MM HH:mm' }} · {{ p.comercio?.nombre }}</p>
                 </div>
                 <div class="text-right">
