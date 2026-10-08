@@ -77,6 +77,9 @@ export class PagosService {
           items,
           external_reference: String(pedido.id),
           back_urls: { success: volver, failure: volver, pending: volver },
+          // Redirige solo a /pago-resultado cuando el pago se aprueba.
+          // Mercado Pago lo rechaza con http://localhost, así que solo se activa con https.
+          ...(frontend.startsWith('https://') ? { auto_return: 'approved' } : {}),
         },
       });
     } catch (error: any) {
