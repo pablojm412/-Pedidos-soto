@@ -23,6 +23,12 @@ export class PagosController {
     return this.pagosService.verificar(paymentId, req.user);
   }
 
+  /** Busca en Mercado Pago los pagos del pedido y actualiza el estado local. Sin números a mano. */
+  @Post('sincronizar/:pedidoId')
+  sincronizar(@Req() req: any, @Param('pedidoId', ParseIntPipe) pedidoId: number) {
+    return this.pagosService.sincronizar(pedidoId, req.user);
+  }
+
   @Get('pedido/:pedidoId')
   findByPedido(@Req() req: any, @Param('pedidoId', ParseIntPipe) pedidoId: number) {
     return this.pagosService.findByPedido(pedidoId, req.user);

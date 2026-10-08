@@ -41,12 +41,14 @@ const ESTADOS: Record<string, string> = {
                   <p class="text-lg font-extrabold text-brand-orange">{{ '$' + monto(p.total) }}</p>
                   <span class="rounded-full bg-orange-50 px-2 py-0.5 text-[10px] font-bold uppercase text-brand-orange">{{ etiqueta(p.estado) }}</span>
                   @if (pagos()[p.id] === 'aprobado') {
-  <span class="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600">Pagado</span>
-} @else if (pagos()[p.id] === 'pendiente') {
-  <span class="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-600">Pago pendiente</span>
-} @else if (pagos()[p.id] === 'rechazado') {
-  <span class="ml-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-600">Pago rechazado</span>
-}
+                    <span class="ml-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-bold uppercase text-emerald-600">Pagado</span>
+                  } @else if (pagos()[p.id] === 'pendiente' && verificando()[p.id]) {
+                    <span class="ml-1 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-bold uppercase text-blue-600"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Verificando pago</span>
+                  } @else if (pagos()[p.id] === 'pendiente') {
+                    <span class="ml-1 rounded-full bg-amber-50 px-2 py-0.5 text-[10px] font-bold uppercase text-amber-600">Pago pendiente</span>
+                  } @else if (pagos()[p.id] === 'rechazado') {
+                    <span class="ml-1 rounded-full bg-rose-50 px-2 py-0.5 text-[10px] font-bold uppercase text-rose-600">Pago rechazado</span>
+                  }
                 </div>
               </div>
               @if (p.items?.length) {
@@ -71,8 +73,10 @@ const ESTADOS: Record<string, string> = {
 export class MisPedidos implements OnInit {
   private http = inject(HttpClient);
   private auth = inject(AuthService);
-    private pagosSvc = inject(PagosService);
+  private pagosSvc = inject(PagosService);
+
   protected pagos = signal<Record<number, string | null>>({});
+  protected verificando = signal<Record<number, boolean>>({});
 
   protected pedidos = signal<any[]>([]);
   protected cargado = signal(false);
@@ -91,13 +95,25 @@ export class MisPedidos implements OnInit {
     }
     try {
       this.pedidos.set(await firstValueFrom(this.http.get<any[]>(`${API}/pedidos?cliente_id=${u.id}`)));
-            for (const p of this.pedidos()) {
-        this.pagosSvc.estadoDelPedido(p.id).then(e =>
-          this.pagos.update(m => ({ ...m, [p.id]: e })));
+      for (const p of this.pedidos()) {
+        this.cargarPago(p.id, p.estado);
       }
       this.cargado.set(true);
     } catch {
       this.mensaje.set('No se pudo conectar con el servidor.');
+    }
+  }
+
+  /** Lee el estado del pago y, si sigue pendiente, le pide al backend que lo revise en Mercado Pago. */
+  private async cargarPago(id: number, estadoPedido: string) {
+    const estado = await this.pagosSvc.estadoDelPedido(id);
+    this.pagos.update(m => ({ ...m, [id]: estado }));
+
+    if (estado === 'pendiente' && estadoPedido !== 'cancelado') {
+      this.verificando.update(m => ({ ...m, [id]: true }));
+      const nuevo = await this.pagosSvc.sincronizar(id);
+      if (nuevo) this.pagos.update(m => ({ ...m, [id]: nuevo }));
+      this.verificando.update(m => ({ ...m, [id]: false }));
     }
   }
 }

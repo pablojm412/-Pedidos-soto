@@ -2,6 +2,7 @@ import { Component, OnDestroy, OnInit, computed, inject, signal } from '@angular
 import { HttpClient } from '@angular/common/http';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { CarritoService } from '../services/carrito.service';
+import { PagosService } from '../services/pagos.service';
 import { environment } from '../../environments/environment';
 
 const API = environment.apiUrl;
@@ -65,6 +66,15 @@ const API = environment.apiUrl;
               @if (p.direccion_entrega) {
                 <p class="text-xs text-slate-500"><i class="fa-solid fa-location-dot mr-1 text-brand-orange"></i>{{ p.direccion_entrega }}</p>
               }
+              @if (verificandoPago()) {
+                <p class="text-xs font-bold text-blue-600"><i class="fa-solid fa-spinner fa-spin mr-1"></i>Verificando pago</p>
+              } @else if (pagoEstado() === 'aprobado') {
+                <p class="text-xs font-bold text-emerald-600"><i class="fa-solid fa-circle-check mr-1"></i>Pagado</p>
+              } @else if (pagoEstado() === 'pendiente') {
+                <p class="text-xs font-bold text-amber-600"><i class="fa-solid fa-clock mr-1"></i>Pago pendiente</p>
+              } @else if (pagoEstado() === 'rechazado') {
+                <p class="text-xs font-bold text-rose-600"><i class="fa-solid fa-circle-xmark mr-1"></i>Pago rechazado</p>
+              }
               <div class="space-y-1 divide-y divide-slate-200/60 text-sm">
                 @for (it of p.items; track it.id) {
                   <div class="flex justify-between pt-1">
@@ -95,11 +105,14 @@ export class Seguimiento implements OnInit, OnDestroy {
   private carrito = inject(CarritoService);
   private http = inject(HttpClient);
   private route = inject(ActivatedRoute);
+  private pagosSvc = inject(PagosService);
   private timer?: ReturnType<typeof setInterval>;
 
   protected pedido = signal<any | null>(null);
   protected cargando = signal(false);
   protected error = signal('');
+  protected pagoEstado = signal<string | null>(null);
+  protected verificandoPago = signal(false);
 
   private readonly orden = ['pendiente', 'aceptado', 'en_camino', 'entregado'];
   protected estado = computed(() => this.pedido()?.estado ?? 'pendiente');
@@ -134,6 +147,8 @@ export class Seguimiento implements OnInit, OnDestroy {
     await this.consultar(id, true);
     this.cargando.set(false);
 
+    if (!this.error()) this.cargarPago(id);
+
     const estado = this.estado();
     if (!this.error() && estado !== 'entregado' && estado !== 'cancelado') {
       this.timer = setInterval(() => this.consultar(id, false), 8000);
@@ -141,6 +156,19 @@ export class Seguimiento implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() { clearInterval(this.timer); }
+
+  /** Lee el estado del pago y, si sigue pendiente, le pide al backend que lo revise en Mercado Pago. */
+  private async cargarPago(id: number) {
+    const estado = await this.pagosSvc.estadoDelPedido(id);
+    this.pagoEstado.set(estado);
+
+    if (estado === 'pendiente' && this.estado() !== 'cancelado') {
+      this.verificandoPago.set(true);
+      const nuevo = await this.pagosSvc.sincronizar(id);
+      if (nuevo) this.pagoEstado.set(nuevo);
+      this.verificandoPago.set(false);
+    }
+  }
 
   private consultar(id: number, primera: boolean): Promise<void> {
     return new Promise(resolve => {
