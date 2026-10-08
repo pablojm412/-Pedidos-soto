@@ -29,6 +29,38 @@ export class PagosService {
     return new MercadoPagoConfig({ accessToken });
   }
 
+  /** Consulta a Mercado Pago el pago real. Nunca se confía en lo que llega en la notificación. */
+  private async consultarPago(paymentId: string) {
+    if (!/^\d+$/.test(paymentId)) throw new BadRequestException('payment_id inválido');
+    const cliente = this.clienteMP();
+    try {
+      return (await new Payment(cliente).get({ id: paymentId })) as any;
+    } catch {
+      throw new NotFoundException('No se encontró ese pago en Mercado Pago');
+    }
+  }
+
+  /** Traduce el pago de Mercado Pago al estado del pago local y lo guarda. */
+  private async aplicarEstado(payment: any, pedido: Pedido, pago: Pago) {
+    if (pago.estado === 'aprobado') return pago;
+
+    let estado = 'pendiente';
+    if (payment.status === 'approved') estado = 'aprobado';
+    else if (payment.status === 'rejected' || payment.status === 'cancelled') estado = 'rechazado';
+
+    if (estado === 'aprobado') {
+      const esperado = Math.round(Number(pedido.total) * 100);
+      const pagado = Math.round(Number(payment.transaction_amount) * 100);
+      if (esperado !== pagado) {
+        throw new BadRequestException('El monto pagado no coincide con el del pedido');
+      }
+    }
+
+    pago.estado = estado;
+    pago.referencia_externa = String(payment.id);
+    return await this.pagoRepository.save(pago);
+  }
+
   async crearPreferencia(pedidoId: number, user: UsuarioToken) {
     if (!Number.isInteger(pedidoId) || pedidoId <= 0) {
       throw new BadRequestException('pedido_id inválido');
@@ -67,6 +99,7 @@ export class PagosService {
     }
 
     const frontend = this.config.get<string>('FRONTEND_URL') ?? 'http://localhost:4200';
+    const backend = this.config.get<string>('BACKEND_URL') ?? '';
     const volver = `${frontend}/pago-resultado`;
     const cliente = this.clienteMP();
 
@@ -80,6 +113,10 @@ export class PagosService {
           // Redirige solo a /pago-resultado cuando el pago se aprueba.
           // Mercado Pago lo rechaza con http://localhost, así que solo se activa con https.
           ...(frontend.startsWith('https://') ? { auto_return: 'approved' } : {}),
+          // Aviso directo de Mercado Pago a este backend (webhook). Requiere URL pública https.
+          ...(backend.startsWith('https://')
+            ? { notification_url: `${backend}/pagos/webhook` }
+            : {}),
         },
       });
     } catch (error: any) {
@@ -110,17 +147,9 @@ export class PagosService {
     };
   }
 
-  /** Sin webhook: se consulta a Mercado Pago el estado real del pago. */
+  /** El cliente vuelve a la app: se consulta a Mercado Pago el estado real del pago. */
   async verificar(paymentId: string, user: UsuarioToken) {
-    if (!/^\d+$/.test(paymentId)) throw new BadRequestException('payment_id inválido');
-
-    const cliente = this.clienteMP();
-    let payment: any;
-    try {
-      payment = await new Payment(cliente).get({ id: paymentId });
-    } catch {
-      throw new NotFoundException('No se encontró ese pago en Mercado Pago');
-    }
+    const payment = await this.consultarPago(paymentId);
 
     const pedidoId = Number(payment?.external_reference);
     if (!Number.isInteger(pedidoId)) {
@@ -135,23 +164,30 @@ export class PagosService {
 
     const pago = await this.pagoRepository.findOne({ where: { pedido_id: pedidoId } } as any);
     if (!pago) throw new NotFoundException('No hay un pago iniciado para este pedido');
-    if (pago.estado === 'aprobado') return pago;
 
-    let estado = 'pendiente';
-    if (payment.status === 'approved') estado = 'aprobado';
-    else if (payment.status === 'rejected' || payment.status === 'cancelled') estado = 'rechazado';
+    return await this.aplicarEstado(payment, pedido, pago);
+  }
 
-    if (estado === 'aprobado') {
-      const esperado = Math.round(Number(pedido.total) * 100);
-      const pagado = Math.round(Number(payment.transaction_amount) * 100);
-      if (esperado !== pagado) {
-        throw new BadRequestException('El monto pagado no coincide con el del pedido');
-      }
+  /**
+   * Webhook: Mercado Pago avisa que un pago cambió. No hay usuario ni JWT,
+   * por eso solo se usa el id y el estado se consulta directo a Mercado Pago.
+   * Es idempotente: si el pago ya estaba aprobado no hace nada.
+   */
+  async procesarWebhook(paymentId: string) {
+    const payment = await this.consultarPago(paymentId);
+
+    const pedidoId = Number(payment?.external_reference);
+    if (!Number.isInteger(pedidoId)) {
+      throw new BadRequestException('El pago no corresponde a un pedido');
     }
 
-    pago.estado = estado;
-    pago.referencia_externa = String(payment.id);
-    return await this.pagoRepository.save(pago);
+    const pedido = await this.pedidoRepository.findOne({ where: { id: pedidoId } } as any);
+    if (!pedido) throw new NotFoundException('El pedido no existe');
+
+    const pago = await this.pagoRepository.findOne({ where: { pedido_id: pedidoId } } as any);
+    if (!pago) throw new NotFoundException('No hay un pago iniciado para este pedido');
+
+    return await this.aplicarEstado(payment, pedido, pago);
   }
 
   async findByPedido(pedidoId: number, user: UsuarioToken) {
