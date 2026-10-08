@@ -40,6 +40,16 @@ export class PagosService {
     }
   }
 
+  /** Le pide al backend que revise en Mercado Pago si el pedido ya se pagó. Devuelve el estado actualizado. */
+  async sincronizar(pedidoId: number): Promise<string | null> {
+    try {
+      const r: any = await firstValueFrom(this.http.post(`${API}/pagos/sincronizar/${pedidoId}`, {}));
+      return r?.estado ?? null;
+    } catch {
+      return null;
+    }
+  }
+
   private mensaje(e: any): string {
     if (e?.status === 0) return 'No se pudo conectar con el servidor.';
     if (e?.status === 503) return 'Los pagos online no están disponibles por ahora.';

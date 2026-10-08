@@ -190,6 +190,41 @@ export class PagosService {
     return await this.aplicarEstado(payment, pedido, pago);
   }
 
+  /**
+   * Busca en Mercado Pago los pagos de un pedido (por external_reference) y actualiza el estado local.
+   * La app lo llama sola al abrir Mis pedidos o el seguimiento, así el cliente no tiene que hacer nada.
+   */
+  async sincronizar(pedidoId: number, user: UsuarioToken) {
+    const pedido = await this.pedidoRepository.findOne({ where: { id: pedidoId } } as any);
+    if (!pedido) throw new NotFoundException('El pedido no existe');
+    if (pedido.cliente_id !== user.sub && user.rol !== 'admin') {
+      throw new ForbiddenException('Este pedido no es tuyo');
+    }
+
+    const pago = await this.pagoRepository.findOne({ where: { pedido_id: pedidoId } } as any);
+    if (!pago) return null;
+    if (pago.estado === 'aprobado') return pago;
+
+    const cliente = this.clienteMP();
+    let resultados: any[] = [];
+    try {
+      const r: any = await new Payment(cliente).search({
+        options: {
+          criteria: 'desc',
+          sort: 'date_created',
+          external_reference: String(pedidoId),
+        },
+      } as any);
+      resultados = r?.results ?? [];
+    } catch {
+      return pago;
+    }
+
+    const elegido = resultados.find((p) => p.status === 'approved') ?? resultados[0];
+    if (!elegido) return pago;
+    return await this.aplicarEstado(elegido, pedido, pago);
+  }
+
   async findByPedido(pedidoId: number, user: UsuarioToken) {
     const pedido = await this.pedidoRepository.findOne({ where: { id: pedidoId } } as any);
     if (!pedido) throw new NotFoundException('El pedido no existe');
