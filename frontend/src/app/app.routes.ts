@@ -7,6 +7,9 @@ import { PanelRepartidor } from './panel-repartidor/panel-repartidor';
 import { MisPedidos } from './mis-pedidos/mis-pedidos';
 import { PagoResultado } from './pago-resultado/pago-resultado';
 
+// Cambiá la ruta de import según dónde tengas creado tu componente de Admin:
+// import { AdminComponent } from './admin/admin'; 
+
 export const routes: Routes = [
   { path: '', component: Home },
   { path: 'restaurante/:id', component: Restaurante },
@@ -16,5 +19,9 @@ export const routes: Routes = [
   { path: 'mis-pedidos', component: MisPedidos },
   { path: 'comercio', component: PanelComercio },
   { path: 'repartidor', component: PanelRepartidor },
+  
+  // Agregamos la ruta del panel de administración aquí:
+  // { path: 'admin', component: AdminComponent },
+  
   { path: '**', redirectTo: '' },
 ];
