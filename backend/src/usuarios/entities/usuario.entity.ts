@@ -14,17 +14,19 @@ export class Usuario {
   @Column({ nullable: true })
   telefono: string;
 
-  @Column({ default: 'cliente' })
-  rol: string; // 'cliente' | 'comercio' | 'repartidor' | 'admin'
+  @Column({ default: 'cliente' }) // roles: cliente, comercio, repartidor, admin
+  rol: string;
 
-  @Column({ select: false })
+  @Column()
   password_hash: string;
 
-  // --- Ubicación en vivo (solo se usa si rol === 'repartidor') ---
-  @Column({ type: 'float', nullable: true })
+  @Column({ default: true })
+  activo: boolean;
+
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   ubicacion_lat: number;
 
-  @Column({ type: 'float', nullable: true })
+  @Column({ type: 'decimal', precision: 10, scale: 7, nullable: true })
   ubicacion_lng: number;
 
   @Column({ type: 'timestamp', nullable: true })

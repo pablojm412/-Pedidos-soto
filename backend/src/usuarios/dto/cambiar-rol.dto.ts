@@ -1,0 +1,1 @@
+import { IsIn } from 'class-validator'; export class CambiarRolDto { @IsIn(['cliente', 'comercio', 'repartidor', 'admin']) rol: string; }

@@ -10,6 +10,7 @@ import { PedidosModule } from './pedidos/pedidos.module';
 import { PagosModule } from './pagos/pagos.module';
 import { AuthModule } from './auth/auth.module';
 import { RepartidoresModule } from './repartidores/repartidores.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { RepartidoresModule } from './repartidores/repartidores.module';
     PagosModule,
     AuthModule,
     RepartidoresModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

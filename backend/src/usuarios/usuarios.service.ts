@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Usuario } from './entities/usuario.entity';
@@ -23,5 +23,23 @@ export class UsuariosService {
     return await this.usuarioRepository.findOne({
       where: { id } as any,
     });
+  }
+
+  async cambiarRol(id: string, rol: string) {
+    const usuario = await this.usuarioRepository.findOne({ where: { id } as any });
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    usuario.rol = rol;
+    await this.usuarioRepository.save(usuario);
+    const { password_hash, ...resto } = usuario;
+    return resto;
+  }
+
+  async cambiarEstado(id: string, activo: boolean) {
+    const usuario = await this.usuarioRepository.findOne({ where: { id } as any });
+    if (!usuario) throw new NotFoundException('Usuario no encontrado');
+    usuario.activo = activo;
+    await this.usuarioRepository.save(usuario);
+    const { password_hash, ...resto } = usuario;
+    return resto;
   }
 }
