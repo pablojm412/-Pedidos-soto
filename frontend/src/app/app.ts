@@ -6,6 +6,7 @@ import { ComerciosService } from './services/comercios.service';
 import { DireccionService } from './services/direccion.service';
 import { AuthModal } from './auth-modal/auth-modal';
 import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
+
 @Component({
   selector: 'app-root',
   imports: [RouterLink, RouterOutlet, AuthModal, CarritoDrawer],
@@ -61,6 +62,14 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
                     <a routerLink="/mis-pedidos" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                       <i class="fa-solid fa-receipt mr-2 text-brand-orange"></i>Mis Pedidos
                     </a>
+                    
+                    <!-- OPCIÓN DE ADMINISTRADOR -->
+                    @if (u.rol === 'admin') {
+                      <a routerLink="/admin" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                        <i class="fa-solid fa-shield-halved mr-2 text-brand-orange"></i>Panel de admin
+                      </a>
+                    }
+
                     @if (u.rol === 'comercio') {
                       <a routerLink="/comercio" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                         <i class="fa-solid fa-store mr-2 text-brand-orange"></i>Panel del comercio
