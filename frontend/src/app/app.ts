@@ -68,7 +68,7 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
                       </a>
                       
                       <!-- SOLO APARECE PARA EL ADMIN -->
-                      @if (u.rol === 'admin' || u.role === 'admin' || u.email === 'admin@soto.com') {
+                      @if (u.rol === 'admin') {
                         <a routerLink="/admin" (click)="menuAbierto = false" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
                           <i class="fa-solid fa-shield-halved mr-2 text-brand-orange"></i>Panel de admin
                         </a>

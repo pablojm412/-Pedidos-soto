@@ -25,3 +25,32 @@ export interface Pedido {
   items: ItemCarrito[];
   total: number;
 }
+
+
+// ============ ADMIN ============
+export interface EstadisticasGenerales {
+  totalComercios: number;
+  comerciosActivos: number;
+  totalPedidos: number;
+  pedidosEntregados: number;
+  ventasTotales: number;
+}
+
+export interface PedidoAdmin {
+  id: number;
+  cliente_id: number;
+  comercio_id: number;
+  repartidor_id: number | null;
+  estado: string;
+  subtotal: number;
+  costo_envio: number;
+  total: number;
+  direccion_entrega: string;
+  creado_en: string;
+}
+
+export interface ReporteVentas {
+  cantidadPedidos: number;
+  totalVendido: number;
+  pedidos: PedidoAdmin[];
+}
