@@ -54,36 +54,42 @@ import { CarritoDrawer } from './carrito-drawer/carrito-drawer';
                   <span class="text-xs font-bold leading-none text-slate-800">{{ u.name }}</span>
                   <span class="text-[10px] font-semibold text-slate-400">{{ u.email }}</span>
                 </div>
-                <div class="group relative">
-                  <button class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-brand-orange font-extrabold text-white shadow-md">
+                
+                <!-- CONTENEDOR CON APERTURA POR CLIC -->
+                <div class="relative">
+                  <button (click)="menuAbierto = !menuAbierto" class="flex h-9 w-9 items-center justify-center rounded-full border-2 border-white bg-brand-orange font-extrabold text-white shadow-md focus:outline-none cursor-pointer">
                     {{ u.name.charAt(0).toUpperCase() }}
                   </button>
-                  <div class="absolute right-0 z-50 hidden w-48 rounded-2xl border border-slate-100 bg-white py-2 shadow-xl group-hover:block">
-                    <a routerLink="/mis-pedidos" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                      <i class="fa-solid fa-receipt mr-2 text-brand-orange"></i>Mis Pedidos
-                    </a>
-                    
-                    <!-- OPCIÓN DE ADMINISTRADOR -->
-                    @if (u.rol === 'admin') {
-                      <a routerLink="/admin" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                        <i class="fa-solid fa-shield-halved mr-2 text-brand-orange"></i>Panel de admin
-                      </a>
-                    }
 
-                    @if (u.rol === 'comercio') {
-                      <a routerLink="/comercio" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                        <i class="fa-solid fa-store mr-2 text-brand-orange"></i>Panel del comercio
+                  @if (menuAbierto) {
+                    <div class="absolute right-0 z-50 mt-2 w-48 rounded-2xl border border-slate-100 bg-white py-2 shadow-xl">
+                      <a routerLink="/mis-pedidos" (click)="menuAbierto = false" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                        <i class="fa-solid fa-receipt mr-2 text-brand-orange"></i>Mis Pedidos
                       </a>
-                    }
-                    @if (u.rol === 'repartidor') {
-                      <a routerLink="/repartidor" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
-                        <i class="fa-solid fa-motorcycle mr-2 text-brand-orange"></i>Panel de repartidor
-                      </a>
-                    }
-                    <button (click)="auth.logout()" class="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50">
-                      <i class="fa-solid fa-right-from-bracket mr-2"></i>Cerrar Sesión
-                    </button>
-                  </div>
+                      
+                      <!-- SOLO APARECE PARA EL ADMIN -->
+                      @if (u.rol === 'admin' || u.role === 'admin' || u.email === 'admin@soto.com') {
+                        <a routerLink="/admin" (click)="menuAbierto = false" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                          <i class="fa-solid fa-shield-halved mr-2 text-brand-orange"></i>Panel de admin
+                        </a>
+                      }
+
+                      @if (u.rol === 'comercio') {
+                        <a routerLink="/comercio" (click)="menuAbierto = false" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                          <i class="fa-solid fa-store mr-2 text-brand-orange"></i>Panel del comercio
+                        </a>
+                      }
+                      @if (u.rol === 'repartidor') {
+                        <a routerLink="/repartidor" (click)="menuAbierto = false" class="block px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-50">
+                          <i class="fa-solid fa-motorcycle mr-2 text-brand-orange"></i>Panel de repartidor
+                        </a>
+                      }
+
+                      <button (click)="auth.logout(); menuAbierto = false" class="w-full px-4 py-2 text-left text-xs font-semibold text-rose-600 transition-colors hover:bg-rose-50">
+                        <i class="fa-solid fa-right-from-bracket mr-2"></i>Cerrar Sesión
+                      </button>
+                    </div>
+                  }
                 </div>
               </div>
             } @else {
@@ -115,6 +121,8 @@ export class App {
   protected auth = inject(AuthService);
   protected comercios = inject(ComerciosService);
   protected direccion = inject(DireccionService);
+
+  protected menuAbierto = false;
 
   protected editarDireccion() {
     const nueva = prompt('¿Dónde entregamos tu pedido?', this.direccion.direccion());
