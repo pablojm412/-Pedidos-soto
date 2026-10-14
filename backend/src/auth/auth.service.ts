@@ -28,13 +28,12 @@ export class AuthService {
       email: dto.email,
       nombre: dto.nombre,
       telefono: dto.telefono,
-            rol: 'cliente', // el registro público siempre crea clientes; los demás roles se asignan por SQL o admin
+      rol: 'cliente',
       password_hash,
     });
 
     const guardado = await this.usuarioRepository.save(nuevoUsuario);
 
-    // Desestructuramos para excluir la contraseña de la respuesta de manera limpia
     const { password_hash: _, ...usuarioSinPassword } = guardado;
 
     return {
@@ -44,18 +43,35 @@ export class AuthService {
   }
 
   async login(dto: LoginDto) {
-    // password_hash tiene select: false, así que se pide de forma explícita
     const usuario = await this.usuarioRepository
       .createQueryBuilder('usuario')
       .addSelect('usuario.password_hash')
       .where('usuario.email = :email', { email: dto.email })
       .getOne();
 
+    // ============ DEBUG - BORRAR DESPUÉS ============
+    console.log('=== DEBUG LOGIN ===');
+    console.log('dto.email:', dto.email);
+    console.log('dto.password:', JSON.stringify(dto.password));
+    console.log('usuario encontrado?:', !!usuario);
+    if (usuario) {
+      console.log('usuario.password_hash:', JSON.stringify(usuario.password_hash));
+      console.log('usuario.password_hash length:', usuario.password_hash?.length);
+      console.log('usuario.password_hash tipo:', typeof usuario.password_hash);
+    }
+    // ================================================
+
     if (!usuario) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
 
     const esValida = await bcrypt.compare(dto.password, usuario.password_hash);
+
+    // ============ DEBUG - BORRAR DESPUÉS ============
+    console.log('>>> esValida:', esValida);
+    console.log('===================');
+    // ================================================
+
     if (!esValida) {
       throw new UnauthorizedException('Credenciales inválidas');
     }
